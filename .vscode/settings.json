@@ -1,0 +1,10 @@
+{
+    // "files.associations": {
+    //     "stdlib.h": "c",
+    //     "uart.h": "c"
+    // },
+    "cmake.configureOnEdit": false,
+    "cmake.configureOnOpen": false,
+    "cmake.revealLog": "never",
+    "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json"
+}
