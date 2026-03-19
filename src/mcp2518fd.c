@@ -60,7 +60,7 @@ const uint16_t crc16_table[256] = {
 void mcp2518fd_init(uint32_t spi_clk_rate) {
     // SPI initialization, referenced spi_master.c in pico_examples
     stdio_init_all();
-    
+
     // Enable SPI 0 at specified clock rate and connect to GPIOs
     spi_init(spi_default, spi_clk_rate);
     gpio_set_function(PICO_DEFAULT_SPI_RX_PIN, GPIO_FUNC_SPI);
@@ -74,5 +74,8 @@ void mcp2518fd_init(uint32_t spi_clk_rate) {
 
     gpio_set_dir(PICO_DEFAULT_SPI_CSN_PIN, GPIO_OUT);
     gpio_put(PICO_DEFAULT_SPI_CSN_PIN, HIGH);
-
 }
+
+uint8_t mcp2518fd_write_byte();
+
+uint8_t mcp2518fd_write_word();
