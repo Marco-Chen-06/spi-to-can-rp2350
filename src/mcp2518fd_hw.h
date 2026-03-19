@@ -1,6 +1,8 @@
 /*
  * mcp2518fd_hw.h
  * This code is taken from Matthew Jeong's can.h in his spi-to-can transceiver.
+ * I think it is a combination of the following files from the manufacturer headers:
+ * drv_canfdspi_defines.h and drv_canfdspi_register.h
  * https://github.com/ProgrammerDummy/SPI-CAN-Driver
  * 
  * Registers and defines for mcp2518fd driver
