@@ -13,10 +13,18 @@
 #include "hardware/spi.h"
 #include "mcp2518fd_hw.h"
 
-void mcp2518_init();
+/*
+ read/write initialization functions 
+*/
+void mcp2518fd_init(uint32_t spi_clk_rate);
 uint8_t mcp2518fd_read_byte();
 uint8_t mcp2518fd_write_byte();
-uint8_t mcp2518_read_word();
-uint8_t mcp2518_write_word();
+uint8_t mcp2518fd_read_word();
+uint8_t mcp2518fd_write_word();
+
+/*
+ abstracted CAN interface functions
+ (these functions call the read/write initialization functions)
+*/
 
 #endif

@@ -15,6 +15,7 @@ set(PICO_DEOPTIMIZED_DEBUG 1)
 
 add_executable(mcp2518fd
     src/mcp2518fd.c
+    src/main.c
 )
 
 target_link_libraries(mcp2518fd
