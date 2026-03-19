@@ -75,7 +75,16 @@ void mcp2518fd_init(uint32_t spi_clk_rate) {
     gpio_set_dir(PICO_DEFAULT_SPI_CSN_PIN, GPIO_OUT);
     gpio_put(PICO_DEFAULT_SPI_CSN_PIN, HIGH);
 }
+uint8_t mcp2518fd_write_byte() {
 
-uint8_t mcp2518fd_write_byte();
+}
 
-uint8_t mcp2518fd_write_word();
+uint8_t mcp2518fd_write_word(uint16_t addr, uint32_t *data) {
+    uint8_t txbuffer[6] = {0};
+    uint8_t rxbuffer[6] = {0};
+
+    txbuffer[0] = (MCP2518FD_INSTR_READ << 4) | (addr >> 8);
+    txbuffer[1] = (addr << 8) & 0xFF;
+
+    
+}
