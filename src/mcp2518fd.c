@@ -78,6 +78,43 @@ void mcp2518fd_init(uint32_t spi_clk_rate) {
     gpio_put(PICO_DEFAULT_SPI_CSN_PIN, HIGH);
 }
 
+
+void mcp2518fd_reset() {
+    uint16_t addr = 0x0000;
+    uint8_t txbuffer[6] = {0};
+    uint8_t rxbuffer[6] = {0};
+
+    txbuffer[0] = (MCP2518FD_INSTR_RESET << 4) | ((addr >> 8) & 0x0F);
+    txbuffer[1] = (addr >> 0) & 0xFF;
+
+    gpio_put(PICO_DEFAULT_SPI_CSN_PIN, LOW);
+    uint8_t error = spi_write_read_blocking(PICO_DEFAULT_SPI, txbuffer, rxbuffer, 2);
+    gpio_put(PICO_DEFAULT_SPI_CSN_PIN, HIGH);
+}
+
+/* 
+  Use SPI to read a byte from a specified address of the MCP2518FD
+  Returns number of bytes written/read via SPI. Should always be 3 though.
+*/
+uint8_t mcp2518fd_read_byte(uint16_t addr, uint8_t *data) {
+    uint8_t txbuffer[6] = {0};
+    uint8_t rxbuffer[6] = {0};
+
+    txbuffer[0] = (MCP2518FD_INSTR_READ << 4) | ((addr >> 8) & 0x0F);
+    txbuffer[1] = (addr >> 0) & 0xFF;
+
+    gpio_put(PICO_DEFAULT_SPI_CSN_PIN, LOW);
+    uint8_t error = spi_write_read_blocking(PICO_DEFAULT_SPI, txbuffer, rxbuffer, 3);
+    gpio_put(PICO_DEFAULT_SPI_CSN_PIN, HIGH);
+
+    *data = (rxbuffer[2] << 0);
+    return error;
+}
+
+/* 
+  Use SPI to read a word from a specified address of the MCP2518FD
+  Returns number of bytes written/read via SPI. Should always be 6 though.
+*/
 uint8_t mcp2518fd_read_word(uint16_t addr, uint32_t *data) {
     uint8_t txbuffer[6] = {0};
     uint8_t rxbuffer[6] = {0};
@@ -95,10 +132,8 @@ uint8_t mcp2518fd_read_word(uint16_t addr, uint32_t *data) {
 
 /* 
   Use SPI to write a byte to a specified address of the MCP2518FD
-
   This can be used in general to write to RAM or any SFR without CRC
-
-  Returns number of bytes written/read via SPI
+  Returns number of bytes written/read via SPI. Should always be 3 though.
 */
 uint8_t mcp2518fd_write_byte(uint16_t addr, uint8_t data) {
     uint8_t txbuffer[6] = {0};
@@ -109,17 +144,15 @@ uint8_t mcp2518fd_write_byte(uint16_t addr, uint8_t data) {
     txbuffer[2] = (data >> 0) & 0xFF;
 
     gpio_put(PICO_DEFAULT_SPI_CSN_PIN, LOW);
-    uint8_t error = spi_write_read_blocking(PICO_DEFAULT_SPI, txbuffer, rxbuffer, 6);
+    uint8_t error = spi_write_read_blocking(PICO_DEFAULT_SPI, txbuffer, rxbuffer, 3);
     gpio_put(PICO_DEFAULT_SPI_CSN_PIN, HIGH);
     return error;
 }
 
 /* 
   Use SPI to write a 32-bit word a specified address of the MCP2518FD
-
   This can be used in general to write to RAM or any SFR without CRC
-
-  Returns number of bytes written/read via SPI
+  Returns number of bytes written/read via SPI. Should always be 6 though.
 */
 uint8_t mcp2518fd_write_word(uint16_t addr, uint32_t data) {
     uint8_t txbuffer[6] = {0};

@@ -22,7 +22,8 @@
 
 */
 void mcp2518fd_init(uint32_t spi_clk_rate);
-uint8_t mcp2518fd_read_byte();
+void mcp2518fd_reset();
+uint8_t mcp2518fd_read_byte(uint16_t addr, uint8_t *data);
 uint8_t mcp2518fd_read_word(uint16_t addr, uint32_t *data);
 uint8_t mcp2518fd_write_byte(uint16_t addr, uint8_t data);
 uint8_t mcp2518fd_write_word(uint16_t addr, uint32_t data);
