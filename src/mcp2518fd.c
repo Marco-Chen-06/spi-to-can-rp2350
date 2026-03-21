@@ -77,13 +77,47 @@ void mcp2518fd_init(uint32_t spi_clk_rate) {
     gpio_set_dir(PICO_DEFAULT_SPI_CSN_PIN, GPIO_OUT);
     gpio_put(PICO_DEFAULT_SPI_CSN_PIN, HIGH);
 }
-uint8_t mcp2518fd_write_byte() {
+
+uint8_t mcp2518fd_read_word(uint16_t addr, uint32_t *data) {
+    uint8_t txbuffer[6] = {0};
+    uint8_t rxbuffer[6] = {0};
+
+    txbuffer[0] = (MCP2518FD_INSTR_READ << 4) | ((addr >> 8) & 0x0F);
+    txbuffer[1] = (addr >> 0) & 0xFF;
+
+    gpio_put(PICO_DEFAULT_SPI_CSN_PIN, LOW);
+    uint8_t error = spi_write_read_blocking(PICO_DEFAULT_SPI, txbuffer, rxbuffer, 6);
+    gpio_put(PICO_DEFAULT_SPI_CSN_PIN, HIGH);
+
+    *data = (rxbuffer[2] << 0) | (rxbuffer[3] << 8) | (rxbuffer[4] << 16) | (rxbuffer[5] << 24);
+    return error;
+}
+
+/* 
+  Use SPI to write a byte to a specified address of the MCP2518FD
+
+  This can be used in general to write to RAM or any SFR without CRC
+
+  Returns number of bytes written/read via SPI
+*/
+uint8_t mcp2518fd_write_byte(uint16_t addr, uint8_t data) {
+    uint8_t txbuffer[6] = {0};
+    uint8_t rxbuffer[6] = {0};
+
+    txbuffer[0] = (MCP2518FD_INSTR_WRITE << 4) | ((addr >> 8) & 0x0F);
+    txbuffer[1] = (addr >> 0) & 0xFF;
+    txbuffer[2] = (data >> 0) & 0xFF;
+
+    gpio_put(PICO_DEFAULT_SPI_CSN_PIN, LOW);
+    uint8_t error = spi_write_read_blocking(PICO_DEFAULT_SPI, txbuffer, rxbuffer, 6);
+    gpio_put(PICO_DEFAULT_SPI_CSN_PIN, HIGH);
+    return error;
 }
 
 /* 
   Use SPI to write a 32-bit word a specified address of the MCP2518FD
 
-  This can be used in generla to write to RAM or any SFR without CRC
+  This can be used in general to write to RAM or any SFR without CRC
 
   Returns number of bytes written/read via SPI
 */
@@ -92,13 +126,12 @@ uint8_t mcp2518fd_write_word(uint16_t addr, uint32_t data) {
     uint8_t rxbuffer[6] = {0};
 
     txbuffer[0] = (MCP2518FD_INSTR_WRITE << 4) | ((addr >> 8) & 0x0F);
-    txbuffer[1] = addr & 0xFF;
-    txbuffer[2] = data & 0xFF;
+    txbuffer[1] = (addr >> 0) & 0xFF;
+    txbuffer[2] = (data >> 0) & 0xFF;
     txbuffer[3] = (data >> 8) & 0xFF;
     txbuffer[4] = (data >> 16) & 0xFF;
     txbuffer[5] = (data >> 24) & 0xFF;
     
-    // drive nCS low
     gpio_put(PICO_DEFAULT_SPI_CSN_PIN, LOW);
     uint8_t error = spi_write_read_blocking(PICO_DEFAULT_SPI, txbuffer, rxbuffer, 6);
     gpio_put(PICO_DEFAULT_SPI_CSN_PIN, HIGH);
