@@ -58,7 +58,13 @@ const uint16_t crc16_table[256] = {
 };
 
 void mcp2518fd_init(uint32_t spi_clk_rate) {
-    // SPI initialization, referenced spi_master.c in pico_examples
+    mcp2518fd_spi_init(spi_clk_rate);
+
+    // configuration code for mcp2518fd goes below
+}
+
+void mcp2518fd_spi_init(uint32_t spi_clk_rate) {
+    // Initialize RP2350 SPI peripheral
     stdio_init_all();
     // Set SPI to (0,0) mode
     spi_set_format(spi_default, MSG_SIZE, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);

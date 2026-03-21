@@ -13,20 +13,25 @@
 #include "hardware/spi.h"
 #include "mcp2518fd_hw.h"
 
-/*
- Read/write and initialization functions 
- These functions use Pico SDK SPI functions to perform basic operations necessary to interface 
- with the MCP2518fd device.
- I was considering making these functions static, but I chose not to because the application
- might find these functions useful. 
-
+/* 
+  Basic read/write functions
+  Use Pico SDK SPI library to perform basic read/write operations to interface with
+  the mcp2518fd
 */
-void mcp2518fd_init(uint32_t spi_clk_rate);
-void mcp2518fd_reset();
 uint8_t mcp2518fd_read_byte(uint16_t addr, uint8_t *data);
 uint8_t mcp2518fd_read_word(uint16_t addr, uint32_t *data);
 uint8_t mcp2518fd_write_byte(uint16_t addr, uint8_t data);
 uint8_t mcp2518fd_write_word(uint16_t addr, uint32_t data);
+
+/* 
+  mcp2518fd init and configuration functions
+  Initialize and configure the mcp2518fd
+*/
+void mcp2518fd_init(uint32_t spi_clk_rate);
+void mcp2518fd_spi_init(uint32_t spi_clk_rate);
+void mcp2518fd_reset();
+
+
 
 /*
  Abstracted CAN interface functions
