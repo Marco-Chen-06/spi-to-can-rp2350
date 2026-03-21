@@ -60,31 +60,47 @@ const uint16_t crc16_table[256] = {
 void mcp2518fd_init(uint32_t spi_clk_rate) {
     // SPI initialization, referenced spi_master.c in pico_examples
     stdio_init_all();
+    // Set SPI to (0,0) mode
+    spi_set_format(spi_default, MSG_SIZE, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
 
     // Enable SPI 0 at specified clock rate and connect to GPIOs
-    spi_init(spi_default, spi_clk_rate);
+    uint32_t real_baudrate = spi_init(spi_default, spi_clk_rate);
+
     gpio_set_function(PICO_DEFAULT_SPI_RX_PIN, GPIO_FUNC_SPI);
     gpio_set_function(PICO_DEFAULT_SPI_TX_PIN, GPIO_FUNC_SPI);
     gpio_set_function(PICO_DEFAULT_SPI_SCK_PIN, GPIO_FUNC_SPI);
-    gpio_set_function(PICO_DEFAULT_SPI_CSN_PIN, GPIO_FUNC_SPI);
 
     gpio_pull_up(PICO_DEFAULT_SPI_RX_PIN);
     gpio_pull_up(PICO_DEFAULT_SPI_TX_PIN);
-    // not sure if I should enable pull-ups for SCK pin
 
+    gpio_set_function(PICO_DEFAULT_SPI_CSN_PIN, GPIO_FUNC_SIO);
     gpio_set_dir(PICO_DEFAULT_SPI_CSN_PIN, GPIO_OUT);
     gpio_put(PICO_DEFAULT_SPI_CSN_PIN, HIGH);
 }
 uint8_t mcp2518fd_write_byte() {
-
 }
 
-uint8_t mcp2518fd_write_word(uint16_t addr, uint32_t *data) {
+/* 
+  Use SPI to write a 32-bit word a specified address of the MCP2518FD
+
+  This can be used in generla to write to RAM or any SFR without CRC
+
+  Returns number of bytes written/read via SPI
+*/
+uint8_t mcp2518fd_write_word(uint16_t addr, uint32_t data) {
     uint8_t txbuffer[6] = {0};
     uint8_t rxbuffer[6] = {0};
 
-    txbuffer[0] = (MCP2518FD_INSTR_READ << 4) | (addr >> 8);
-    txbuffer[1] = (addr << 8) & 0xFF;
-
+    txbuffer[0] = (MCP2518FD_INSTR_WRITE << 4) | ((addr >> 8) & 0x0F);
+    txbuffer[1] = addr & 0xFF;
+    txbuffer[2] = data & 0xFF;
+    txbuffer[3] = (data >> 8) & 0xFF;
+    txbuffer[4] = (data >> 16) & 0xFF;
+    txbuffer[5] = (data >> 24) & 0xFF;
     
+    // drive nCS low
+    gpio_put(PICO_DEFAULT_SPI_CSN_PIN, LOW);
+    uint8_t error = spi_write_read_blocking(PICO_DEFAULT_SPI, txbuffer, rxbuffer, 6);
+    gpio_put(PICO_DEFAULT_SPI_CSN_PIN, HIGH);
+    return error;
 }
