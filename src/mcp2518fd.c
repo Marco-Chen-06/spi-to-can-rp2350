@@ -60,10 +60,15 @@ const uint16_t crc16_table[256] = {
 void mcp2518fd_init(uint32_t spi_clk_rate) {
     mcp2518fd_spi_init(spi_clk_rate);
 
-    // configuration code for mcp2518fd goes below
+    // configure CiCON
+    REG_CiCON ciCon;
+    ciCon.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiCON / 2];
+    ciCon.bF.IsoCrcEnable = 0; // don't enable crc
+    ciCon.bF.StoreInTEF = 1;
+
 }
 
-void mcp2518fd_spi_init(uint32_t spi_clk_rate) {
+static void mcp2518fd_spi_init(uint32_t spi_clk_rate) {
     // Initialize RP2350 SPI peripheral
     stdio_init_all();
     // Set SPI to (0,0) mode
@@ -84,7 +89,9 @@ void mcp2518fd_spi_init(uint32_t spi_clk_rate) {
     gpio_put(PICO_DEFAULT_SPI_CSN_PIN, HIGH);
 }
 
-
+/*
+  Perform mcp2518fd RESET instruction
+*/
 void mcp2518fd_reset() {
     uint16_t addr = 0x0000;
     uint8_t txbuffer[6] = {0};

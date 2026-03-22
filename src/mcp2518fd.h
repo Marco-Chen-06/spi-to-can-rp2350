@@ -24,13 +24,12 @@ uint8_t mcp2518fd_write_byte(uint16_t addr, uint8_t data);
 uint8_t mcp2518fd_write_word(uint16_t addr, uint32_t data);
 
 /* 
-  mcp2518fd init and configuration functions
-  Initialize and configure the mcp2518fd
+  mcp2518fd hardware init and configuration functions
+  Initialize and configure the mcp2518fd hardware registers
 */
 void mcp2518fd_init(uint32_t spi_clk_rate);
-void mcp2518fd_spi_init(uint32_t spi_clk_rate);
+static void mcp2518fd_spi_init(uint32_t spi_clk_rate);
 void mcp2518fd_reset();
-
 
 
 /*
