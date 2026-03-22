@@ -1,3 +1,3 @@
 # spi-to-can-rp2350
 
-spi to can transceiver library compatible with igvc opencan --> mcp2518 driver -> rp2350 spi driver
+mcp2518fd driver for the rp2350 to enable sensor network communication over CAN bus through SPI protocol
