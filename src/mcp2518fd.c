@@ -57,15 +57,18 @@ const uint16_t crc16_table[256] = {
     0x8213, 0x0216, 0x021C, 0x8219, 0x0208, 0x820D, 0x8207, 0x0202
 };
 
-void mcp2518fd_init(uint32_t spi_clk_rate) {
+int8_t mcp2518fd_init(uint32_t spi_clk_rate) {
     mcp2518fd_spi_init(spi_clk_rate);
 
     // configure CiCON
     REG_CiCON ciCon;
-    ciCon.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiCON / 2];
+    ciCon.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiCON / 4];
     ciCon.bF.IsoCrcEnable = 0; // don't enable crc
-    ciCon.bF.StoreInTEF = 1;
+    ciCon.bF.StoreInTEF = 0; // don't store data in transmit fifo
 
+    if (mcp2518fd_write_word(MCP2518FD_REG_CiCON, ciCon.word)) {
+        return -1;
+    }
 }
 
 static void mcp2518fd_spi_init(uint32_t spi_clk_rate) {
