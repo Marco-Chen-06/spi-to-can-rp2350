@@ -74,11 +74,12 @@ int8_t mcp2518fd_init(uint32_t spi_clk_rate) {
 static void mcp2518fd_spi_init(uint32_t spi_clk_rate) {
     // Initialize RP2350 SPI peripheral
     stdio_init_all();
-    // Set SPI to (0,0) mode
-    spi_set_format(spi_default, MSG_SIZE, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
 
     // Enable SPI 0 at specified clock rate and connect to GPIOs
     uint32_t real_baudrate = spi_init(spi_default, spi_clk_rate);
+
+    // Set SPI to (0,0) mode
+    spi_set_format(spi_default, MSG_SIZE, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
 
     gpio_set_function(PICO_DEFAULT_SPI_RX_PIN, GPIO_FUNC_SPI);
     gpio_set_function(PICO_DEFAULT_SPI_TX_PIN, GPIO_FUNC_SPI);
@@ -104,7 +105,7 @@ void mcp2518fd_reset() {
     txbuffer[1] = (addr >> 0) & 0xFF;
 
     gpio_put(PICO_DEFAULT_SPI_CSN_PIN, LOW);
-    uint8_t error = spi_write_read_blocking(PICO_DEFAULT_SPI, txbuffer, rxbuffer, 2);
+    uint8_t error = spi_write_read_blocking(spi_default, txbuffer, rxbuffer, 2);
     gpio_put(PICO_DEFAULT_SPI_CSN_PIN, HIGH);
 }
 
@@ -120,7 +121,7 @@ uint8_t mcp2518fd_read_byte(uint16_t addr, uint8_t *data) {
     txbuffer[1] = (addr >> 0) & 0xFF;
 
     gpio_put(PICO_DEFAULT_SPI_CSN_PIN, LOW);
-    uint8_t error = spi_write_read_blocking(PICO_DEFAULT_SPI, txbuffer, rxbuffer, 3);
+    uint8_t error = spi_write_read_blocking(spi_default, txbuffer, rxbuffer, 3);
     gpio_put(PICO_DEFAULT_SPI_CSN_PIN, HIGH);
 
     *data = (rxbuffer[2] << 0);
@@ -139,7 +140,7 @@ uint8_t mcp2518fd_read_word(uint16_t addr, uint32_t *data) {
     txbuffer[1] = (addr >> 0) & 0xFF;
 
     gpio_put(PICO_DEFAULT_SPI_CSN_PIN, LOW);
-    uint8_t error = spi_write_read_blocking(PICO_DEFAULT_SPI, txbuffer, rxbuffer, 6);
+    uint8_t error = spi_write_read_blocking(spi_default, txbuffer, rxbuffer, 6);
     gpio_put(PICO_DEFAULT_SPI_CSN_PIN, HIGH);
 
     *data = (rxbuffer[2] << 0) | (rxbuffer[3] << 8) | (rxbuffer[4] << 16) | (rxbuffer[5] << 24);
@@ -160,7 +161,7 @@ uint8_t mcp2518fd_write_byte(uint16_t addr, uint8_t data) {
     txbuffer[2] = (data >> 0) & 0xFF;
 
     gpio_put(PICO_DEFAULT_SPI_CSN_PIN, LOW);
-    uint8_t error = spi_write_read_blocking(PICO_DEFAULT_SPI, txbuffer, rxbuffer, 3);
+    uint8_t error = spi_write_read_blocking(spi_default, txbuffer, rxbuffer, 3);
     gpio_put(PICO_DEFAULT_SPI_CSN_PIN, HIGH);
     return error;
 }
@@ -182,7 +183,7 @@ uint8_t mcp2518fd_write_word(uint16_t addr, uint32_t data) {
     txbuffer[5] = (data >> 24) & 0xFF;
     
     gpio_put(PICO_DEFAULT_SPI_CSN_PIN, LOW);
-    uint8_t error = spi_write_read_blocking(PICO_DEFAULT_SPI, txbuffer, rxbuffer, 6);
+    uint8_t error = spi_write_read_blocking(spi_default, txbuffer, rxbuffer, 6);
     gpio_put(PICO_DEFAULT_SPI_CSN_PIN, HIGH);
     return error;
 }
