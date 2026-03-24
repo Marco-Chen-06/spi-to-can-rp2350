@@ -81,14 +81,14 @@ static void mcp2518fd_spi_init(uint32_t spi_clk_rate) {
     // Set SPI to (0,0) mode
     spi_set_format(spi_default, MSG_SIZE, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
 
-    gpio_set_function(PICO_DEFAULT_SPI_RX_PIN, GPIO_FUNC_SPI);
-    gpio_set_function(PICO_DEFAULT_SPI_TX_PIN, GPIO_FUNC_SPI);
-    gpio_set_function(PICO_DEFAULT_SPI_SCK_PIN, GPIO_FUNC_SPI);
+    gpio_set_function(PICO_DEFAULT_SPI_RX_PIN, GPIO_FUNC_SPI); // SPI0RX GP16
+    gpio_set_function(PICO_DEFAULT_SPI_TX_PIN, GPIO_FUNC_SPI); // SPI0TX GP19
+    gpio_set_function(PICO_DEFAULT_SPI_SCK_PIN, GPIO_FUNC_SPI); // SPI0SCK GP18
 
-    gpio_pull_up(PICO_DEFAULT_SPI_RX_PIN);
-    gpio_pull_up(PICO_DEFAULT_SPI_TX_PIN);
+    // gpio_pull_up(PICO_DEFAULT_SPI_RX_PIN);
+    // gpio_pull_up(PICO_DEFAULT_SPI_TX_PIN);
 
-    gpio_set_function(PICO_DEFAULT_SPI_CSN_PIN, GPIO_FUNC_SIO);
+    gpio_set_function(PICO_DEFAULT_SPI_CSN_PIN, GPIO_FUNC_SIO); // SPICSN GP17
     gpio_set_dir(PICO_DEFAULT_SPI_CSN_PIN, GPIO_OUT);
     gpio_put(PICO_DEFAULT_SPI_CSN_PIN, HIGH);
 }
