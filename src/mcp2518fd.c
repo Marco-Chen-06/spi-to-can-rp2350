@@ -65,10 +65,23 @@ int8_t mcp2518fd_init(uint32_t spi_clk_rate) {
     ciCon.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiCON / 4];
     ciCon.bF.IsoCrcEnable = 0; // don't enable crc
     ciCon.bF.StoreInTEF = 0; // don't store data in transmit fifo
-
-    if (mcp2518fd_write_word(MCP2518FD_REG_CiCON, ciCon.word)) {
+    if (!mcp2518fd_write_word(MCP2518FD_REG_CiCON, ciCon.word)) {
         return -1;
     }
+
+    // matthew nominal bit timing config
+    REG_CiNBTCFG ciNbtcfg;
+    ciNbtcfg.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiNBTCFG / 4];
+    ciNbtcfg.bF.SJW = 15;
+    ciNbtcfg.bF.TSEG2 = 15;
+    ciNbtcfg.bF.TSEG1 = 62;
+    ciNbtcfg.bF.BRP = 0;
+    if (!mcp2518fd_write_word(MCP2518FD_REG_CiNBTCFG, ciNbtcfg.word)) {
+        return -1;
+    }
+
+    return 0;
+
 }
 
 static void mcp2518fd_spi_init(uint32_t spi_clk_rate) {

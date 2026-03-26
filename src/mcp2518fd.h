@@ -25,13 +25,12 @@ uint8_t mcp2518fd_write_word(uint16_t addr, uint32_t data);
 
 /* 
   mcp2518fd hardware init and configuration functions
-  Initialize and configure the mcp2518fd hardware registers
+  Initialize and configure the mcp2518fd hardware registers.
+  People using this driver for CAN should not touch these. 
 */
 int8_t mcp2518fd_init(uint32_t spi_clk_rate);
 static void mcp2518fd_spi_init(uint32_t spi_clk_rate);
 void mcp2518fd_reset();
-
-
 /*
  Abstracted CAN interface functions
  These functions use the read/write initialization functions defined above
