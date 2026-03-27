@@ -14,6 +14,9 @@
 
 #define LED_PIN 25
 
+void blink_init();
+void blink(int delay_ms);
+
 int main() {
     mcp2518fd_init(SPI_CLK_RATE);
 
@@ -23,10 +26,19 @@ int main() {
     uint32_t data = 0xAAAAAAAA;
 
     for (;;) {
-      gpio_put(LED_PIN, 1);
+      blink(500);
       mcp2518fd_write_word(MCP2518FD_REG_CiCON, data);
-      sleep_ms(500);
-      gpio_put(LED_PIN, 0);
-      sleep_ms(500);
     }
+}
+
+void blink_init() {
+    gpio_init(LED_PIN);
+    gpio_set_dir(LED_PIN, GPIO_OUT);
+}
+
+void blink(int delay_ms) {
+    gpio_put(LED_PIN, 1);
+    sleep_ms(delay_ms);
+    gpio_put(LED_PIN, 0);
+    sleep_ms(delay_ms);
 }

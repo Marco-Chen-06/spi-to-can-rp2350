@@ -242,19 +242,20 @@ uint8_t mcp2518fd_write_word(uint16_t addr, uint32_t data) {
     gpio_put(PICO_DEFAULT_SPI_CSN_PIN, LOW);
     uint8_t error = spi_write_read_blocking(spi_default, txbuffer, rxbuffer, 6);
     gpio_put(PICO_DEFAULT_SPI_CSN_PIN, HIGH);
+    return error;
 }
 
 // fill up RAM with data
 void mcp2518fd_ram_init(uint8_t data) {
-  for (uint32_t addr = MCP2518FD_RAM_START; addr < MCP2518FD_RAM_END; addr++) {
-    mcp2518fd_write_byte(addr, data);
-  }
+    for (uint32_t addr = MCP2518FD_RAM_START; addr < MCP2518FD_RAM_END; addr++) {
+      mcp2518fd_write_byte(addr, data);
+    }
 }
 
 void mcp2518fd_opmode_select(CAN_OPERATION_MODE opmode) {
-  uint8_t ciCon_data = 0;
-  mcp2518fd_read_byte(MCP2518FD_REG_CiCON + 3, &ciCon_data);
-  ciCon_data &= ~0x07;
-  ciCon_data |= opmode;
-  mcp2518fd_write_byte(MCP2518FD_REG_CiCON + 3, ciCon_data);
+    uint8_t ciCon_data = 0;
+    mcp2518fd_read_byte(MCP2518FD_REG_CiCON + 3, &ciCon_data);
+    ciCon_data &= ~0x07;
+    ciCon_data |= opmode;
+    mcp2518fd_write_byte(MCP2518FD_REG_CiCON + 3, ciCon_data);
 }   
