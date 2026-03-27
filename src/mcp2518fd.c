@@ -58,27 +58,46 @@ const uint16_t crc16_table[256] = {
 };
 
 int8_t mcp2518fd_init(uint32_t spi_clk_rate) {
+    /*
+      I won't be doing error checking for the writes and reads because the internal
+      spi_write_read_blocking function never returns anything other than the number
+      of bytes transmitted/received. Look inside pico SDK's spi_write_read_blocking
+      function and it only returns "len", no matter what. 
+    */
     mcp2518fd_spi_init(spi_clk_rate);
 
-    // configure CiCON
+    mcp2518fd_reset();
+
+    // oscillator configuration, CLKO divisor 1, SCLK divisor 1, PLL disabled
+    // SOLDERED CAN breakout board has 40 MHz internal oscillator, so no divisors or PLL needed
+    REG_OSC osc;
+    osc.word = mcp2518fd_specific_reset_vals[MCP2518FD_REG_OSC / 4]; 
+    osc.bF.CLKODIV = 0b00;
+    osc.bF.SCLKDIV = 0b0;
+    osc.bF.PllEnable = 0b0;
+    mcp2518fd_write_word(MCP2518FD_REG_OSC, osc.word);
+
+    // I/O configuration, GPIO0 and GPIO1 to be both inputs 
+    // also bit fields in the IOCON register must be written using single data byte SFR WRITE instructions
+    REG_IOCON iocon;
+    iocon.word = mcp2518fd_specific_reset_vals[MCP2518FD_REG_IOCON / 4];
+    mcp2518fd_write_byte(MCP2518FD_REG_IOCON, *iocon.byte); 
+
+    // CAN configuration, disable crc, dont store data in transmit fifo
     REG_CiCON ciCon;
     ciCon.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiCON / 4];
-    ciCon.bF.IsoCrcEnable = 0; // don't enable crc
-    ciCon.bF.StoreInTEF = 0; // don't store data in transmit fifo
-    if (!mcp2518fd_write_word(MCP2518FD_REG_CiCON, ciCon.word)) {
-        return -1;
-    }
+    ciCon.bF.IsoCrcEnable = 0; 
+    ciCon.bF.StoreInTEF = 0; 
+    mcp2518fd_write_word(MCP2518FD_REG_CiCON, ciCon.word);
 
-    // matthew nominal bit timing config
+    // matthew nominal bit timing config 
     REG_CiNBTCFG ciNbtcfg;
     ciNbtcfg.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiNBTCFG / 4];
     ciNbtcfg.bF.SJW = 15;
     ciNbtcfg.bF.TSEG2 = 15;
     ciNbtcfg.bF.TSEG1 = 62;
-    ciNbtcfg.bF.BRP = 0;
-    if (!mcp2518fd_write_word(MCP2518FD_REG_CiNBTCFG, ciNbtcfg.word)) {
-        return -1;
-    }
+    ciNbtcfg.bF.BRP = 0; // baudrate prescaler of 1
+    mcp2518fd_write_word(MCP2518FD_REG_CiNBTCFG, ciNbtcfg.word);
 
     return 0;
 
