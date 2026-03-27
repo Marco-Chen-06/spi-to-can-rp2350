@@ -31,6 +31,9 @@ uint8_t mcp2518fd_write_word(uint16_t addr, uint32_t data);
 int8_t mcp2518fd_init(uint32_t spi_clk_rate);
 static void mcp2518fd_spi_init(uint32_t spi_clk_rate);
 void mcp2518fd_reset();
+void mcp2518fd_ram_init(uint8_t data);
+void mcp2518fd_opmode_select(CAN_OPERATION_MODE opmode);
+
 /*
  Abstracted CAN interface functions
  These functions use the read/write initialization functions defined above

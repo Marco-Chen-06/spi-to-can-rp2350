@@ -109,6 +109,7 @@ int8_t mcp2518fd_init(uint32_t spi_clk_rate) {
     ciFifocon1.txBF.PayLoadSize = 0b111;
     ciFifocon1.txBF.TxPriority = 1;
     mcp2518fd_write_word(MCP2518FD_REG_CiFIFOCON + (1 * MCP2518FD_FIFO_REG_STRIDE), ciFifocon1.word);
+    
     // Fifo 2: receive fifo; 16 messages, 64 byte max payload, time stamping disabled
     REG_CiFIFOCON ciFifocon2;
     ciFifocon2.word = mcp2518fd_fifo_reset_vals[0];
@@ -119,12 +120,12 @@ int8_t mcp2518fd_init(uint32_t spi_clk_rate) {
     mcp2518fd_write_word(MCP2518FD_REG_CiFIFOCON + (2 * MCP2518FD_FIFO_REG_STRIDE), ciFifocon2.word);
 
     // Initialize RAM
-
+    mcp2518fd_ram_init(0x00);
 
     // Select Normal Mode
+    mcp2518fd_opmode_select(CAN_NORMAL_MODE);
 
     return 0;
-
 }
 
 static void mcp2518fd_spi_init(uint32_t spi_clk_rate) {
@@ -241,5 +242,19 @@ uint8_t mcp2518fd_write_word(uint16_t addr, uint32_t data) {
     gpio_put(PICO_DEFAULT_SPI_CSN_PIN, LOW);
     uint8_t error = spi_write_read_blocking(spi_default, txbuffer, rxbuffer, 6);
     gpio_put(PICO_DEFAULT_SPI_CSN_PIN, HIGH);
-    return error;
 }
+
+// fill up RAM with data
+void mcp2518fd_ram_init(uint8_t data) {
+  for (uint32_t addr = MCP2518FD_RAM_START; addr < MCP2518FD_RAM_END; addr++) {
+    mcp2518fd_write_byte(addr, data);
+  }
+}
+
+void mcp2518fd_opmode_select(CAN_OPERATION_MODE opmode) {
+  uint8_t ciCon_data = 0;
+  mcp2518fd_read_byte(MCP2518FD_REG_CiCON + 3, &ciCon_data);
+  ciCon_data &= ~0x07;
+  ciCon_data |= opmode;
+  mcp2518fd_write_byte(MCP2518FD_REG_CiCON + 3, ciCon_data);
+}   
