@@ -68,6 +68,16 @@ int8_t mcp2518fd_init(uint32_t spi_clk_rate) {
 
     mcp2518fd_reset();
 
+    // check for osc_ready bit to be set (no timeout because I haven't implemented timers)
+    uint8_t osc_data = 0;
+    while (1) {
+        mcp2518fd_read_byte(MCP2518FD_REG_OSC + 1, &osc_data);
+        if (osc_data & 0x04) {
+            break;
+        }
+    }
+
+
     // oscillator configuration, CLKO divisor 1, SCLK divisor 1, PLL disabled
     // SOLDERED CAN breakout board has 40 MHz internal oscillator, so no divisors or PLL needed
     REG_OSC osc;
@@ -128,7 +138,7 @@ int8_t mcp2518fd_init(uint32_t spi_clk_rate) {
     return 0;
 }
 
-static void mcp2518fd_spi_init(uint32_t spi_clk_rate) {
+void mcp2518fd_spi_init(uint32_t spi_clk_rate) {
     // Initialize RP2350 SPI peripheral
     stdio_init_all();
 
@@ -258,4 +268,14 @@ void mcp2518fd_opmode_select(CAN_OPERATION_MODE opmode) {
     ciCon_data &= ~0x07;
     ciCon_data |= opmode;
     mcp2518fd_write_byte(MCP2518FD_REG_CiCON + 3, ciCon_data);
+
+    // wait for opmod to match the requested operation mode before continuing
+    ciCon_data = 0;
+
+    while (1) {
+        mcp2518fd_read_byte(MCP2518FD_REG_CiCON + 2, &ciCon_data);
+        if ((ciCon_data >> 5 & 0x07) == opmode) {
+            break;
+        }
+    }
 }   

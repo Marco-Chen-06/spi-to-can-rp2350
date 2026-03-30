@@ -14,29 +14,39 @@
 
 #define LED_PIN 25
 
-void blink_init();
-void blink(int delay_ms);
+void blink_builtin_init();
+void blink_builtin(int delay_ms);
 
 int main() {
-    mcp2518fd_init(SPI_CLK_RATE);
+    blink_builtin_init();
+    mcp2518fd_spi_init(SPI_CLK_RATE);
+    mcp2518fd_reset();    
 
-    gpio_init(LED_PIN);
-    gpio_set_dir(LED_PIN, GPIO_OUT);
+    // read ciCon data from mcp2518fd
+    uint32_t data = 0;
+    mcp2518fd_read_word(MCP2518FD_REG_CiCON, &data);
+    if (data != mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiCON/4]) {
+      return -1;
+    }
 
-    uint32_t data = 0xAAAAAAAA;
+    // select opmode
+    mcp2518fd_opmode_select(CAN_NORMAL_MODE);
+
+    // read ciCon data from mcp2518fd
+    uint32_t modified_data = 0;;
+    mcp2518fd_read_word(MCP2518FD_REG_CiCON, &modified_data);
 
     for (;;) {
-      blink(500);
-      mcp2518fd_write_word(MCP2518FD_REG_CiCON, data);
+      blink_builtin(500);
     }
 }
 
-void blink_init() {
+void blink_builtin_init() {
     gpio_init(LED_PIN);
     gpio_set_dir(LED_PIN, GPIO_OUT);
 }
 
-void blink(int delay_ms) {
+void blink_builtin(int delay_ms) {
     gpio_put(LED_PIN, 1);
     sleep_ms(delay_ms);
     gpio_put(LED_PIN, 0);
