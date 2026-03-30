@@ -111,21 +111,21 @@ int8_t mcp2518fd_init(uint32_t spi_clk_rate) {
     ciNbtcfg.bF.BRP = 0; // baudrate prescaler of 1
     mcp2518fd_write_word(MCP2518FD_REG_CiNBTCFG, ciNbtcfg.word);
 
-    // Fifo 1: transmit fifo; 5 messages, 64 byte max payload, high priority
+    // Fifo 1: transmit fifo; 5 messages, 8 byte max payload, high priority
     REG_CiFIFOCON ciFifocon1;
     ciFifocon1.word = mcp2518fd_fifo_reset_vals[0];
     ciFifocon1.txBF.TxEnable = 1;
     ciFifocon1.txBF.FifoSize = 4;
-    ciFifocon1.txBF.PayLoadSize = 0b111;
+    ciFifocon1.txBF.PayLoadSize = 0b000;
     ciFifocon1.txBF.TxPriority = 1;
     mcp2518fd_write_word(MCP2518FD_REG_CiFIFOCON + (1 * MCP2518FD_FIFO_REG_STRIDE), ciFifocon1.word);
     
-    // Fifo 2: receive fifo; 16 messages, 64 byte max payload, time stamping disabled
+    // Fifo 2: receive fifo; 16 messages, 8 byte max payload, time stamping disabled
     REG_CiFIFOCON ciFifocon2;
     ciFifocon2.word = mcp2518fd_fifo_reset_vals[0];
     ciFifocon2.rxBF.TxEnable = 0;
     ciFifocon2.rxBF.FifoSize = 15;
-    ciFifocon2.rxBF.PayLoadSize = 0b111;
+    ciFifocon2.rxBF.PayLoadSize = 0b000;
     ciFifocon2.rxBF.RxTimeStampEnable = 0;
     mcp2518fd_write_word(MCP2518FD_REG_CiFIFOCON + (2 * MCP2518FD_FIFO_REG_STRIDE), ciFifocon2.word);
 
@@ -280,6 +280,64 @@ void mcp2518fd_opmode_select(CAN_OPERATION_MODE opmode) {
     }
 }   
 
-
+// this function is just for testing creating a tx object and sending it.
+// as a result, it has magic numbers and terrible programming semantics 
+// it also doesn't have any defensive programming whatsoever and assumes
+// that fifo1 is a tx fifo with 8 byte payload
+// DO NOT USE!!!
 void mcp2518fd_tx_fifo_test() {
+    // initialize ID and control bits
+    CAN_TX_MSGOBJ tx_obj;
+    uint8_t tx_data[8];
+    // size of data payload in bytes
+    uint8_t data_payload_size = 8;
+
+    tx_obj.word[0] = 0;
+    tx_obj.word[1] = 0;
+    
+    tx_obj.bF.id.SID = 0x200; // 0x200 is arbitrary, just a random ID number I chose
+    tx_obj.bF.id.EID = 0;
+
+    // data BRS not faster
+    tx_obj.bF.ctrl.BRS = 0;
+    // 8 byte payload (same as in ciFifocon)
+    tx_obj.bF.ctrl.DLC = 0b000;
+    // not can FD frame
+    tx_obj.bF.ctrl.FDF = 0;
+    // base format, not extended format
+    tx_obj.bF.ctrl.IDE = 0;
+
+    for (int i = 0; i < data_payload_size; i++) {
+        tx_data[i] = i;
+    }
+
+    uint8_t fifo1_status_data;
+    mcp2518fd_read_byte(MCP2518FD_REG_CiFIFOSTA + 
+        (1 * MCP2518FD_FIFO_REG_STRIDE), &fifo1_status_data);
+    
+    // check if fifo is not full by seeing if CiFifosta1.TFNRFNIF is set
+    if (fifo1_status_data & 0x01) {
+        // get address in RAM of next TX object from CiFIFOUA1
+        REG_CiFIFOUA ciFifoua1;
+        mcp2518fd_read_word(MCP2518FD_REG_CiFIFOUA + 
+            (1 * MCP2518FD_FIFO_REG_STRIDE), &ciFifoua1.word);
+        uint32_t addr = MCP2518FD_RAM_START + ciFifoua1.bF.UserAddress;
+
+        REG_CiFIFOCON ciFifoCon1;
+        uint8_t txbuffer[8+8]; // 8 bytes from tx_obj, 8 bytes of data
+        for (int i = 0; i < data_payload_size; i++) {
+            txbuffer[i] = tx_obj.byte[i];
+        }
+
+        for (int i = 0; i < data_payload_size; i++) {
+            txbuffer[i + 8] = tx_data[i];
+        }
+
+        // remember to write multiples of 4 bytes to RAM
+        // I put i < 4 because txbuffer has 16 bytes in it 
+        for (int i = 0; i < 4; i++) {
+            mcp2518fd_write_word(addr, txbuffer[i]);
+            addr += 4;
+        }
+    }
 }

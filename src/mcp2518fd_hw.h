@@ -670,10 +670,10 @@ typedef union {
     uint8_t  byte[4];
 } REG_DEVID;
 
-/* Start of structs that Marco added from mcp25XXfd application code */
+/* Start of extra structs that Marco added from mcp25XXfd application code */
 typedef struct CAN_MSGOBJ_ID {
     uint32_t SID : 11;
-    uint32_t EIF : 18;
+    uint32_t EID : 18;
     uint32_t SID11: 1;
     uint32_t unimplemented1 : 2;
 } CAN_MSGOBJ_ID;
@@ -699,6 +699,7 @@ typedef union {
     uint32_t word[3];
     uint8_t byte[12];
 } CAN_TX_MSGOBJ;
+/* End of extra structs that Marco added from mcp25XXfd application code */
 
 /*===========================================================================*/
 /* SECTION 5: REGISTER RESET VALUES                                         */
