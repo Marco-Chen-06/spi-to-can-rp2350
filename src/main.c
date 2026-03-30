@@ -16,12 +16,30 @@
 
 void blink_builtin_init();
 void blink_builtin(int delay_ms);
+int test_read_write();
 
 int main() {
     blink_builtin_init();
     mcp2518fd_spi_init(SPI_CLK_RATE);
     mcp2518fd_reset();    
 
+    test_read_write();
+}
+
+void blink_builtin_init() {
+    gpio_init(LED_PIN);
+    gpio_set_dir(LED_PIN, GPIO_OUT);
+}
+
+void blink_builtin(int delay_ms) {
+    gpio_put(LED_PIN, 1);
+    sleep_ms(delay_ms);
+    gpio_put(LED_PIN, 0);
+    sleep_ms(delay_ms);
+}
+
+// archived test of checking of read/write works
+int test_read_write() {
     // read ciCon data from mcp2518fd
     uint32_t data = 0;
     mcp2518fd_read_word(MCP2518FD_REG_CiCON, &data);
@@ -39,16 +57,4 @@ int main() {
     for (;;) {
       blink_builtin(500);
     }
-}
-
-void blink_builtin_init() {
-    gpio_init(LED_PIN);
-    gpio_set_dir(LED_PIN, GPIO_OUT);
-}
-
-void blink_builtin(int delay_ms) {
-    gpio_put(LED_PIN, 1);
-    sleep_ms(delay_ms);
-    gpio_put(LED_PIN, 0);
-    sleep_ms(delay_ms);
 }

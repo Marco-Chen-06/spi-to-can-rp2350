@@ -68,16 +68,6 @@ int8_t mcp2518fd_init(uint32_t spi_clk_rate) {
 
     mcp2518fd_reset();
 
-    // check for osc_ready bit to be set (no timeout because I haven't implemented timers)
-    uint8_t osc_data = 0;
-    while (1) {
-        mcp2518fd_read_byte(MCP2518FD_REG_OSC + 1, &osc_data);
-        if (osc_data & 0x04) {
-            break;
-        }
-    }
-
-
     // oscillator configuration, CLKO divisor 1, SCLK divisor 1, PLL disabled
     // SOLDERED CAN breakout board has 40 MHz internal oscillator, so no divisors or PLL needed
     REG_OSC osc;
@@ -86,6 +76,15 @@ int8_t mcp2518fd_init(uint32_t spi_clk_rate) {
     osc.bF.SCLKDIV = 0b0;
     osc.bF.PllEnable = 0b0;
     mcp2518fd_write_word(MCP2518FD_REG_OSC, osc.word);
+
+    // check for osc_ready bit to be set (no timeout because I haven't implemented timers)
+    uint8_t osc_data = 0;
+    while (1) {
+        mcp2518fd_read_byte(MCP2518FD_REG_OSC + 1, &osc_data);
+        if (osc_data & 0x04) {
+            break;
+        }
+    }
 
     // I/O configuration, GPIO0 and GPIO1 to be both inputs 
     // also, bit fields in the IOCON register must be written using single data byte SFR WRITE instructions
