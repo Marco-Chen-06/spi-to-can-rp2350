@@ -57,6 +57,7 @@ const uint16_t crc16_table[256] = {
     0x8213, 0x0216, 0x021C, 0x8219, 0x0208, 0x820D, 0x8207, 0x0202
 };
 
+// initialize mcp2518fd with hardcoded settings. Namely, 500kbps with no crc.
 int8_t mcp2518fd_init(uint32_t spi_clk_rate) {
     /*
       I won't be doing error checking for the writes and reads because the internal
@@ -278,3 +279,7 @@ void mcp2518fd_opmode_select(CAN_OPERATION_MODE opmode) {
         }
     }
 }   
+
+
+void mcp2518fd_tx_fifo_test() {
+}

@@ -670,6 +670,35 @@ typedef union {
     uint8_t  byte[4];
 } REG_DEVID;
 
+/* Start of structs that Marco added from mcp25XXfd application code */
+typedef struct CAN_MSGOBJ_ID {
+    uint32_t SID : 11;
+    uint32_t EIF : 18;
+    uint32_t SID11: 1;
+    uint32_t unimplemented1 : 2;
+} CAN_MSGOBJ_ID;
+
+typedef struct CAN_TX_MSGOBJ_CTRL {
+    uint32_t DLC : 4;
+    uint32_t IDE : 1;
+    uint32_t RTR : 1;
+    uint32_t BRS : 1;
+    uint32_t FDF : 1;
+    uint32_t ESI: 1;
+    uint32_t SEQ : 23;
+} CAN_TX_MSGOBJ_CTRL;
+
+/* -- Transmit Message Object (TXQ and TX FIFO) ------------------------------*/
+/* This is from MCP25XXFD Datasheet, page 27 and MCP2518FD Datasheet, page 66 */
+typedef union {
+    struct {
+        CAN_MSGOBJ_ID id;
+        CAN_TX_MSGOBJ_CTRL ctrl;
+        uint32_t timeStamp;
+    } bF;
+    uint32_t word[3];
+    uint8_t byte[12];
+} CAN_TX_MSGOBJ;
 
 /*===========================================================================*/
 /* SECTION 5: REGISTER RESET VALUES                                         */

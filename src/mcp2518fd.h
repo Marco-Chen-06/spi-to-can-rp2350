@@ -34,6 +34,7 @@ void mcp2518fd_reset();
 void mcp2518fd_ram_init(uint8_t data);
 void mcp2518fd_opmode_select(CAN_OPERATION_MODE opmode);
 
+void mcp2518fd_tx_fifo_test();
 /*
  Abstracted CAN interface functions
  These functions use the read/write initialization functions defined above

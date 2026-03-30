@@ -23,7 +23,11 @@ int main() {
     mcp2518fd_spi_init(SPI_CLK_RATE);
     mcp2518fd_reset();    
 
-    test_read_write();
+    mcp2518fd_init(SPI_CLK_RATE);
+
+    for (;;) {
+      blink_builtin(500);
+    }
 }
 
 void blink_builtin_init() {
