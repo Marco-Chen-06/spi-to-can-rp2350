@@ -19,7 +19,7 @@ First, clone this repository.
 Create a build folder inside this repository. <br> 
 `mkdir build`
 
-Navigate into the build directory
+Navigate into the build directory <br> 
 `cd build`
 
 Run the cmake command to build <br>
@@ -41,7 +41,7 @@ If you want to redo the build process, just `rm -rf build` and do the cmake and 
 Open two terminal sessions. I will call the first terminal TERM1 and the second terminal TERM2.
 
 In TERM1,it doesn't matter what directory you are in
-Start openocd so that you can run GDB on it later
+Start openocd so that you can run GDB on it later <br> 
 `sudo openocd -s tcl -f interface/cmsis-dap.cfg -f target/rp2350.cfg -c "adapter speed 5000"`
 
 You will see a bunch of text on your terminal, and something like
@@ -49,18 +49,18 @@ You will see a bunch of text on your terminal, and something like
 port 3333, but keep in mind the port number.
 
 
-In TERM2, navigate back to this repository and cd into the build directory you made before.
-`gdb mcp2518fd.elf`
-`set architecture arm`
-`target remote localhost:3333`
+In TERM2, navigate back to this repository and cd into the build directory you made before. <br> 
+`gdb mcp2518fd.elf` <br> 
+`set architecture arm` <br> 
+`target remote localhost:3333` <br> 
 Replace 3333 with whatever port came up for you before.
 
-Turn on the terminal user interface because its easier to read
+Turn on the terminal user interface because its easier to read <br> 
 `tui enable`
 
-To run the code through gdb as if there were no debugger:
-`break main`
-`continue`
-`continue`
+To run the code through gdb as if there were no debugger: <br> 
+`break main` <br> 
+`continue` <br> 
+`continue` <br> 
 
 The first continue gets you to the start of main. The second continue runs the program.
