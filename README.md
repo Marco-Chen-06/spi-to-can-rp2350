@@ -4,6 +4,9 @@ mcp2518fd driver for the rp2350 to enable communication over CAN bus through SPI
 
 Build and Make configurations
 
+**Connection Diagram**
+https://drive.google.com/file/d/1ZWddQFBW2MUMJHvnhTNMZumeyX-481jm/view?usp=sharing
+
 **Assumptions**
 
 I am writing this guide under the assumption that openocd and the pico environment are set up on your system.
