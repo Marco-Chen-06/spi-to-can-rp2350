@@ -19,8 +19,7 @@ void blink_builtin(int delay_ms);
 int test_read_write();
 
 int main() {
-    blink_builtin_init();
-    mcp2518fd_reset();    
+    blink_builtin_init(); 
 
     mcp2518fd_init(SPI_CLK_RATE);
 
