@@ -2,12 +2,12 @@
 
 mcp2518fd driver for the rp2350 to enable communication over CAN bus through SPI protocol
 
-Build and Make configurations
+## Build and Make configurations
 
-**Connection Diagram** <br>
+### Connection Diagram
 https://drive.google.com/file/d/1ZWddQFBW2MUMJHvnhTNMZumeyX-481jm/view?usp=sharing
 
-**Assumptions**
+### Assumptions
 
 I am writing this guide under the assumption that openocd and the pico environment are set up on your system.
 I am also assuming that you are using the two-pico setup, with a pico1 as a hardware debugger and a pico2
@@ -16,7 +16,7 @@ as a target board.
 The 'setup' guide for the openocd and pico environment is here, but it's better to just ask Fred about this.
 https://docs.google.com/document/d/1_4DQLY6vFT5FQG7_9an4s5RqUcZifFovZtI_F7NQG68/edit?usp=sharing
 
-**Compiling the code**
+### Compiling the code
 First, clone this repository.
 
 Create a build folder inside this repository. <br> 
@@ -40,7 +40,7 @@ Now make everything
 
 If you want to redo the build process, just `rm -rf build` and do the cmake and make over again. Be careful of using rm -rf though.
 
-**Running the code**
+### Running the code
 Open two terminal sessions. I will call the first terminal TERM1 and the second terminal TERM2.
 
 In TERM1,it doesn't matter what directory you are in
