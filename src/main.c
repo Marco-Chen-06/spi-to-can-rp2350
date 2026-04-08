@@ -20,12 +20,14 @@ int test_read_write();
 
 int main() {
     blink_builtin_init();
-    mcp2518fd_spi_init(SPI_CLK_RATE);
     mcp2518fd_reset();    
 
     mcp2518fd_init(SPI_CLK_RATE);
 
+    int tx_status;
+
     for (;;) {
+      tx_status = mcp2518fd_tx_fifo_test();
       blink_builtin(500);
     }
 }

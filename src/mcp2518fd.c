@@ -138,7 +138,7 @@ int8_t mcp2518fd_init(uint32_t spi_clk_rate) {
     return 0;
 }
 
-void mcp2518fd_spi_init(uint32_t spi_clk_rate) {
+static void mcp2518fd_spi_init(uint32_t spi_clk_rate) {
     // Initialize RP2350 SPI peripheral
     stdio_init_all();
 
@@ -285,7 +285,9 @@ void mcp2518fd_opmode_select(CAN_OPERATION_MODE opmode) {
 // it also doesn't have any defensive programming whatsoever and assumes
 // that fifo1 is a tx fifo with 8 byte payload
 // DO NOT USE!!!
-void mcp2518fd_tx_fifo_test() {
+int mcp2518fd_tx_fifo_test() {
+    // first section: load message into transmit fifo
+
     // initialize ID and control bits
     CAN_TX_MSGOBJ tx_obj;
     uint8_t tx_data[8];
@@ -300,13 +302,14 @@ void mcp2518fd_tx_fifo_test() {
 
     // data BRS not faster
     tx_obj.bF.ctrl.BRS = 0;
-    // 8 byte payload (same as in ciFifocon)
-    tx_obj.bF.ctrl.DLC = 0b000;
+    // 8 byte payload (
+    tx_obj.bF.ctrl.DLC = 0b1000;
     // not can FD frame
     tx_obj.bF.ctrl.FDF = 0;
     // base format, not extended format
     tx_obj.bF.ctrl.IDE = 0;
 
+    // fill data with counting numbers (just for testing)
     for (int i = 0; i < data_payload_size; i++) {
         tx_data[i] = i;
     }
@@ -315,29 +318,54 @@ void mcp2518fd_tx_fifo_test() {
     mcp2518fd_read_byte(MCP2518FD_REG_CiFIFOSTA + 
         (1 * MCP2518FD_FIFO_REG_STRIDE), &fifo1_status_data);
     
-    // check if fifo is not full by seeing if CiFifosta1.TFNRFNIF is set
-    if (fifo1_status_data & 0x01) {
-        // get address in RAM of next TX object from CiFIFOUA1
-        REG_CiFIFOUA ciFifoua1;
-        mcp2518fd_read_word(MCP2518FD_REG_CiFIFOUA + 
-            (1 * MCP2518FD_FIFO_REG_STRIDE), &ciFifoua1.word);
-        uint32_t addr = MCP2518FD_RAM_START + ciFifoua1.bF.UserAddress;
+    // check if fifo is not full by seeing if CiFifosta1.TFNRFNIF is set. Exit early if it is full.
+    if (!(fifo1_status_data & 0x01)) {
+        return -1;
+    }
 
-        REG_CiFIFOCON ciFifoCon1;
-        uint8_t txbuffer[8+8]; // 8 bytes from tx_obj, 8 bytes of data
-        for (int i = 0; i < data_payload_size; i++) {
-            txbuffer[i] = tx_obj.byte[i];
-        }
+    // get address in RAM of next TX object from CiFIFOUA1
+    REG_CiFIFOUA ciFifoua1;
+    mcp2518fd_read_word(MCP2518FD_REG_CiFIFOUA + 
+        (1 * MCP2518FD_FIFO_REG_STRIDE), &ciFifoua1.word);
+    uint32_t addr = MCP2518FD_RAM_START + ciFifoua1.bF.UserAddress;
 
-        for (int i = 0; i < data_payload_size; i++) {
-            txbuffer[i + 8] = tx_data[i];
-        }
+    REG_CiFIFOCON ciFifoCon1;
+    uint8_t txbuffer[8+8]; // 8 bytes of tx_obj config + 8 bytes of data
+    for (int i = 0; i < data_payload_size; i++) {
+        txbuffer[i] = tx_obj.byte[i];
+        txbuffer[i+8] = tx_data[i];
+    }
 
-        // remember to write multiples of 4 bytes to RAM
-        // I put i < 4 because txbuffer has 16 bytes in it 
-        for (int i = 0; i < 4; i++) {
-            mcp2518fd_write_word(addr, txbuffer[i]);
-            addr += 4;
+    // remember to write multiples of 4 bytes to RAM
+    // I put i < 4 because txbuffer has 16 bytes in it 
+    for (int i = 0; i < 4; i++) {
+        mcp2518fd_write_word(addr, txbuffer[i]);
+        addr += 4;
+    }
+
+    // second section: request transmission of message in transmit fifo
+    // store address of CiFIFOCON1
+    addr = MCP2518FD_REG_CiFIFOCON + (1 * MCP2518FD_FIFO_REG_STRIDE);
+    uint8_t fifo1_config_data;
+    mcp2518fd_read_byte(addr + 1, &fifo1_config_data);
+
+    // check if fifo is still resetting by checking FRESET bit.
+    // if FRESET is set, then return early. Normally, we should
+    // wait until FRESET is clear before taking any action. So this
+    // guard clause sufficient in the final driver.
+    if (fifo1_config_data & (1 << 2)) {
+        return -2;
+    }
+
+    // set UINC and TXREQ
+    mcp2518fd_write_byte(addr + 1, 0b11);
+
+    
+    // wait until TX is cleared before continuing
+    while (1) {
+        mcp2518fd_read_byte(addr + 1, &fifo1_config_data);
+        if (!(fifo1_config_data & (1 << 1))) {
+            break;
         }
     }
 }
