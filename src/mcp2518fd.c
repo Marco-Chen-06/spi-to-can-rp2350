@@ -133,7 +133,7 @@ int8_t mcp2518fd_init(uint32_t spi_clk_rate) {
     mcp2518fd_ram_init(0x00);
 
     // Select Normal Mode
-    mcp2518fd_opmode_select(CAN_EXTERNAL_LOOPBACK_MODE);
+    mcp2518fd_opmode_select(CAN_NORMAL_MODE);
     // mcp2518fd_opmode_select(CAN_NORMAL_MODE);
 
     return 0;
