@@ -4,7 +4,7 @@ mcp2518fd driver for the rp2350 to enable communication over CAN bus through SPI
 
 Build and Make configurations
 
-**Connection Diagram**
+**Connection Diagram** <br>
 https://drive.google.com/file/d/1ZWddQFBW2MUMJHvnhTNMZumeyX-481jm/view?usp=sharing
 
 **Assumptions**
