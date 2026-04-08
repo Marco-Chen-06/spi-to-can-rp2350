@@ -336,10 +336,12 @@ int mcp2518fd_tx_fifo_test() {
         txbuffer[i+8] = tx_data[i];
     }
 
-    // remember to write multiples of 4 bytes to RAM
-    // I put i < 4 because txbuffer has 16 bytes in it 
-    for (int i = 0; i < 4; i++) {
-        mcp2518fd_write_word(addr, txbuffer[i]);
+    // write tx_data to RAM in multiples of 4 bytes
+    uint32_t ram_tx_data = 0;
+    for (int i = 0; i < 16; i += 4) {
+        ram_tx_data = txbuffer[i] | (txbuffer[i+1] << 8) 
+        | (txbuffer[i+2] << 16) | (txbuffer[i+4] << 24);
+        mcp2518fd_write_word(addr, ram_tx_data);
         addr += 4;
     }
 
