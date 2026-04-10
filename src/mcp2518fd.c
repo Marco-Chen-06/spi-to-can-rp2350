@@ -129,6 +129,7 @@ int8_t mcp2518fd_init(uint32_t spi_clk_rate) {
     ciFifocon2.rxBF.RxTimeStampEnable = 0;
     mcp2518fd_write_word(MCP2518FD_REG_CiFIFOCON + (2 * MCP2518FD_FIFO_REG_STRIDE), ciFifocon2.word);
 
+
     // Initialize RAM
     mcp2518fd_ram_init(0x00);
 
@@ -286,6 +287,7 @@ void mcp2518fd_opmode_select(CAN_OPERATION_MODE opmode) {
 // it also doesn't have any defensive programming whatsoever and assumes
 // that fifo1 is a tx fifo with 8 byte payload
 // DO NOT USE!!!
+// return value: error code
 int mcp2518fd_tx_fifo_test() {
     // first section: load message into transmit fifo
 
@@ -371,4 +373,16 @@ int mcp2518fd_tx_fifo_test() {
             break;
         }
     }
+    return 0;
+}
+
+// this function is for testing receiving of RX message
+// objects only from FIFO1, which is expected to be configured
+// as an RX FIFO. This function has terrible programming semantics
+// and is made solely for testing RX< to which everything will be generalized
+// after completion
+// Also sets up filter object and mask object 0
+// return value: error code
+int mcp2518fd_rx_fifo_test() {
+
 }
