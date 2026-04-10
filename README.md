@@ -13,7 +13,7 @@ I am writing this guide under the assumption that openocd and the pico environme
 I am also assuming that you are using the two-pico setup, with a pico1 as a hardware debugger and a pico2
 as a target board. 
 
-The 'setup' guide for the openocd and pico environment is here, but it's better to just ask Fred about this.
+The setup guide for the openocd and pico environment is here, but it's better to just ask Fred about this.
 https://docs.google.com/document/d/1_4DQLY6vFT5FQG7_9an4s5RqUcZifFovZtI_F7NQG68/edit?usp=sharing
 
 ### Compiling the code
@@ -26,13 +26,12 @@ Navigate into the build directory <br>
 `cd build`
 
 Run the cmake command to build <br>
-`cmake -DCMAKE_BUILD_TYPE=Debug -DPICO_BOARD=pico2 -DPICO_SDK_PATH=<path to your pico sdk repository> ..`
+`cmake -DCMAKE_BUILD_TYPE=Debug -DPICO_SDK_PATH=<path to your pico sdk repository> ..`
 
 Some notes about the above command:
 - We are setting the build type to be Debug because we are going to run our program through GDB
-- The DPICO_BOARD is pico2 because the pico2 is our target board that has the rp2350. So we want to compile for our target board.
 - Replace `<path to your pico sdk repistory> `with the path to your pico sdk repository. Do not leave in the '<' and '>'. For example, the command that I run is <br>
-`cmake -DCMAKE_BUILD_TYPE=Debug -DPICO_BOARD=pico2 -DPICO_SDK_PATH=../../../pico-sdk ..`
+`cmake -DCMAKE_BUILD_TYPE=Debug -DPICO_SDK_PATH=../../../pico-sdk ..`
 - Do not forget the .. because you are in the build directory
 
 Now make everything
