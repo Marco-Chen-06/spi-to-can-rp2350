@@ -381,8 +381,69 @@ int mcp2518fd_tx_fifo_test() {
 // as an RX FIFO. This function has terrible programming semantics
 // and is made solely for testing RX< to which everything will be generalized
 // after completion
-// Also sets up filter object and mask object 0
+// Also sets up filter object and mask object 0.
 // return value: error code
-int mcp2518fd_rx_fifo_test() {
+int mcp2518fd_rx_fifo_test(uint8_t *data) {
+    // first section: configure filter0 and mask0 to match standard
+    // frames with SID 0x200 - 0x20F
+    uint16_t filter_num = 0;
+    uint16_t fifo_channel_num = 2; // fifo channel number to receive the data
 
+    // clear FLTEN bit before changing filter or mask object
+    REG_CiFLTCON_BYTE ciFltcon0;
+    uint32_t addr = MCP2518FD_REG_CiFLTCON + filter_num;
+    mcp2518fd_read_byte(addr, &ciFltcon0.byte);
+    ciFltcon0.bF.Enable = 0; // disable fifo
+    mcp2518fd_write_byte(addr, ciFltcon0.byte);
+
+    // configure filter object 0
+    REG_CiFLTOBJ fObj0;
+    fObj0.word = 0;
+    fObj0.bF.SID = 0x200;
+    fObj0.bF.SID11 = 0;
+    fObj0.bF.EID = 0;
+    fObj0.bF.EXIDE = 0; // only match messages with SID
+    addr = MCP2518FD_REG_CiFLTOBJ + (filter_num * MCP2518FD_FILTER_REG_STRIDE);
+    mcp2518fd_write_byte(addr, fObj0.word);
+
+    REG_CiMASK mObj0;
+    mObj0.word = 0;
+    mObj0.bF.MSID = 0x7F0; // make mask 4 bits wide from the LSB
+    mObj0.bF.MSID11 = 0;
+    mObj0.bF.MEID = 0;
+    mObj0.bF.MIDE = 1; // match EXIDE bit 
+    addr = MCP2518FD_REG_CiMASK + (filter_num * MCP2518FD_FILTER_REG_STRIDE);
+    mcp2518fd_write_byte(addr, mObj0.word);
+
+    ciFltcon0.bF.BufferPointer = fifo_channel_num;
+    ciFltcon0.bF.Enable = 1; // enable fifo
+    addr = MCP2518FD_REG_CiFLTCON + filter_num;
+    mcp2518fd_write_byte(addr, ciFltcon0.byte);
+    
+    // second section: receive the message and store it in data
+    CAN_RX_MSGOBJ rxObj;
+    uint8_t rx_data[8];
+    uint8_t fifo_status_data;
+    addr = MCP2518FD_REG_CiFIFOSTA + (fifo_channel_num * MCP2518FD_FIFO_REG_STRIDE);
+    // block until fifo contains atleast one message (terrible practice)
+    while (1) {
+        mcp2518fd_read_byte(addr, &fifo_status_data);
+        // check if TFNRFNIF is set (if its set, then fifo not empty)
+        if (fifo_status_data & 0x01) {
+            break;
+        }
+    }
+
+    // read message and uinc
+
+
+
+    uint8_t fifo1_status_data;
+    mcp2518fd_read_byte(MCP2518FD_REG_CiFIFOSTA + 
+        (1 * MCP2518FD_FIFO_REG_STRIDE), &fifo1_status_data);
+    
+    // check if fifo is not full by seeing if CiFifosta1.TFNRFNIF is set. Exit early if it is full.
+    if (!(fifo1_status_data & 0x01)) {
+        return -1;
+    }
 }

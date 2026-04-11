@@ -563,6 +563,45 @@ typedef union {
     uint8_t byte;
 } REG_CiFLTCON_BYTE;
 
+
+//! CAN Filter Object ID
+
+typedef struct _CAN_FILTEROBJ_ID {
+    uint32_t SID : 11;
+    uint32_t EID : 18;
+    uint32_t SID11 : 1;
+    uint32_t EXIDE : 1;
+    uint32_t unimplemented1 : 1;
+} CAN_FILTEROBJ_ID;
+
+//! CAN Mask Object ID
+
+typedef struct _CAN_MASKOBJ_ID {
+    uint32_t MSID : 11;
+    uint32_t MEID : 18;
+    uint32_t MSID11 : 1;
+    uint32_t MIDE : 1;
+    uint32_t unimplemented1 : 1;
+} CAN_MASKOBJ_ID;
+
+// *****************************************************************************
+//! Filter Object Register
+
+typedef union _REG_CiFLTOBJ {
+    CAN_FILTEROBJ_ID bF;
+    uint32_t word;
+    uint8_t byte[4];
+} REG_CiFLTOBJ;
+
+// *****************************************************************************
+//! Mask Object Register
+
+typedef union _REG_CiMASK {
+    CAN_MASKOBJ_ID bF;
+    uint32_t word;
+    uint8_t byte[4];
+} REG_CiMASK;
+
 /*--- Oscillator Register (OSC) at 0xE00 -----------------------------------*/
 typedef union {
     struct {
@@ -699,6 +738,34 @@ typedef union {
     uint32_t word[3];
     uint8_t byte[12];
 } CAN_TX_MSGOBJ;
+
+//! CAN RX Message Object Control
+
+typedef struct _CAN_RX_MSGOBJ_CTRL {
+    uint32_t DLC : 4;
+    uint32_t IDE : 1;
+    uint32_t RTR : 1;
+    uint32_t BRS : 1;
+    uint32_t FDF : 1;
+    uint32_t ESI : 1;
+    uint32_t unimplemented1 : 2;
+    uint32_t FilterHit : 5;
+    uint32_t unimplemented2 : 16;
+} CAN_RX_MSGOBJ_CTRL;
+
+typedef union _CAN_RX_MSGOBJ {
+
+    struct {
+        CAN_MSGOBJ_ID id;
+        CAN_RX_MSGOBJ_CTRL ctrl;
+        uint32_t timeStamp;
+    } bF;
+    uint32_t word[3];
+    uint8_t byte[12];
+} CAN_RX_MSGOBJ;
+
+
+
 /* End of extra structs that Marco added from mcp25XXfd application code */
 
 /*===========================================================================*/
