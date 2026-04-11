@@ -401,7 +401,7 @@ int mcp2518fd_rx_init_test() {
     fObj0.bF.EID = 0;
     fObj0.bF.EXIDE = 0; // only match messages with SID
     addr = MCP2518FD_REG_CiFLTOBJ + (filter_num * MCP2518FD_FILTER_REG_STRIDE);
-    mcp2518fd_write_byte(addr, fObj0.word);
+    mcp2518fd_write_word(addr, fObj0.word);
 
     REG_CiMASK mObj0;
     mObj0.word = 0;
@@ -410,7 +410,7 @@ int mcp2518fd_rx_init_test() {
     mObj0.bF.MEID = 0;
     mObj0.bF.MIDE = 1; // match EXIDE bit 
     addr = MCP2518FD_REG_CiMASK + (filter_num * MCP2518FD_FILTER_REG_STRIDE);
-    mcp2518fd_write_byte(addr, mObj0.word);
+    mcp2518fd_write_word(addr, mObj0.word);
 
     ciFltcon0.bF.BufferPointer = fifo_channel_num;
     ciFltcon0.bF.Enable = 1; // enable fifo
@@ -447,21 +447,21 @@ int mcp2518fd_rx_fifo_test(uint8_t *data) {
     // read one rx obj data from RAM in multiples of 4 bytes
     uint32_t rx_obj_data[4]; 
     for (int i = 0; i < 4; i++) {
-        mcp2518fd_read_word(addr + i, &rx_obj_data[i]);
+        mcp2518fd_read_word(addr + (i * 4), &rx_obj_data[i]);
     }
 
-    data[0] = (rx_obj_data[2] >> 0);
-    data[1] = (rx_obj_data[2] >> 1);
-    data[2] = (rx_obj_data[2] >> 2);
-    data[3] = (rx_obj_data[2] >> 3);
-    data[4] = (rx_obj_data[3] >> 0);
-    data[5] = (rx_obj_data[3] >> 1);
-    data[6] = (rx_obj_data[3] >> 2);
-    data[7] = (rx_obj_data[3] >> 3);
+    data[0] = (rx_obj_data[2] >> 0) & 0xFF;
+    data[1] = (rx_obj_data[2] >> 8) & 0xFF;
+    data[2] = (rx_obj_data[2] >> 16) & 0xFF;
+    data[3] = (rx_obj_data[2] >> 24) & 0xFF;
+    data[4] = (rx_obj_data[3] >> 0) & 0xFF;
+    data[5] = (rx_obj_data[3] >> 8) & 0xFF;
+    data[6] = (rx_obj_data[3] >> 16) & 0xFF;
+    data[7] = (rx_obj_data[3] >> 24) & 0xFF;
 
-    // set UINC and TXREQ
-    addr = MCP2518FD_REG_CiFIFOCON + (1 * MCP2518FD_FIFO_REG_STRIDE);
-    mcp2518fd_write_byte(addr + 1, 0b11);
+    // set UINC
+    addr = MCP2518FD_REG_CiFIFOCON + (fifo_channel_num * MCP2518FD_FIFO_REG_STRIDE);
+    mcp2518fd_write_byte(addr + 1, 0b01);
 
     return 0;
 }
