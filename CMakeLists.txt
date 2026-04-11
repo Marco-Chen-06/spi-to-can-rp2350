@@ -30,8 +30,8 @@ target_link_libraries(mcp2518fd
     hardware_spi
 )
 
-pico_enable_stdio_usb(mcp2518fd 1)
-pico_enable_stdio_uart(mcp2518fd 0)
+#pico_enable_stdio_usb(mcp2518fd 1)
+pico_enable_stdio_uart(mcp2518fd 1)
 
 pico_add_extra_outputs(mcp2518fd)
 
