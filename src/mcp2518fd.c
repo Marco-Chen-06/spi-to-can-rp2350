@@ -350,14 +350,14 @@ int mcp2518fd_tx_fifo_test() {
 
     // second section: request transmission of message in transmit fifo
     // store address of CiFIFOCON1
-    addr = MCP2518FD_REG_CiFIFOCON + (1 * MCP2518FD_FIFO_REG_STRIDE);
     uint8_t fifo1_config_data;
+    addr = MCP2518FD_REG_CiFIFOCON + (1 * MCP2518FD_FIFO_REG_STRIDE);
     mcp2518fd_read_byte(addr + 1, &fifo1_config_data);
 
     // check if fifo is still resetting by checking FRESET bit.
     // if FRESET is set, then return early. Normally, we should
     // wait until FRESET is clear before taking any action. So this
-    // guard clause sufficient in the final driver.
+    // guard clause NOT sufficient in the final driver.
     if (fifo1_config_data & (1 << 2)) {
         return -2;
     }
@@ -376,14 +376,11 @@ int mcp2518fd_tx_fifo_test() {
     return 0;
 }
 
-// this function is for testing receiving of RX message
-// objects only from FIFO1, which is expected to be configured
-// as an RX FIFO. This function has terrible programming semantics
-// and is made solely for testing RX< to which everything will be generalized
-// after completion
-// Also sets up filter object and mask object 0.
+// this function is expected to only be called before mcp2518fd_rx_fifo_test
+// this function sets up filter object 0 and mask object 0 with hardcoded values
+// It captures frames with SID from 0x200 - 0x20F and points the filter to FIFO2
 // return value: error code
-int mcp2518fd_rx_fifo_test(uint8_t *data) {
+int mcp2518fd_rx_init_test() {
     // first section: configure filter0 and mask0 to match standard
     // frames with SID 0x200 - 0x20F
     uint16_t filter_num = 0;
@@ -419,12 +416,18 @@ int mcp2518fd_rx_fifo_test(uint8_t *data) {
     ciFltcon0.bF.Enable = 1; // enable fifo
     addr = MCP2518FD_REG_CiFLTCON + filter_num;
     mcp2518fd_write_byte(addr, ciFltcon0.byte);
+
+    return 0;
+}
+
+// this function tests RX based on settings from mcp2518fd_rx_init_test
+int mcp2518fd_rx_fifo_test(uint8_t *data) {
+    uint16_t fifo_channel_num = 2; // fifo channel number to receive the data
     
     // second section: receive the message and store it in data
-    CAN_RX_MSGOBJ rxObj;
-    uint8_t rx_data[8];
     uint8_t fifo_status_data;
-    addr = MCP2518FD_REG_CiFIFOSTA + (fifo_channel_num * MCP2518FD_FIFO_REG_STRIDE);
+    uint32_t addr = MCP2518FD_REG_CiFIFOSTA + (fifo_channel_num * MCP2518FD_FIFO_REG_STRIDE);
+    
     // block until fifo contains atleast one message (terrible practice)
     while (1) {
         mcp2518fd_read_byte(addr, &fifo_status_data);
@@ -434,16 +437,31 @@ int mcp2518fd_rx_fifo_test(uint8_t *data) {
         }
     }
 
-    // read message and uinc
+    // get address in RAM of next TX object from CiFIFOUA1
+    REG_CiFIFOUA ciFifoua2;
+    addr = MCP2518FD_REG_CiFIFOUA + (fifo_channel_num * MCP2518FD_FIFO_REG_STRIDE);
+    mcp2518fd_read_word(addr, &ciFifoua2.word);
 
-
-
-    uint8_t fifo1_status_data;
-    mcp2518fd_read_byte(MCP2518FD_REG_CiFIFOSTA + 
-        (1 * MCP2518FD_FIFO_REG_STRIDE), &fifo1_status_data);
+    addr = MCP2518FD_RAM_START + ciFifoua2.bF.UserAddress;
     
-    // check if fifo is not full by seeing if CiFifosta1.TFNRFNIF is set. Exit early if it is full.
-    if (!(fifo1_status_data & 0x01)) {
-        return -1;
+    // read one rx obj data from RAM in multiples of 4 bytes
+    uint32_t rx_obj_data[4]; 
+    for (int i = 0; i < 4; i++) {
+        mcp2518fd_read_word(addr + i, &rx_obj_data[i]);
     }
+
+    data[0] = (rx_obj_data[2] >> 0);
+    data[1] = (rx_obj_data[2] >> 1);
+    data[2] = (rx_obj_data[2] >> 2);
+    data[3] = (rx_obj_data[2] >> 3);
+    data[4] = (rx_obj_data[3] >> 0);
+    data[5] = (rx_obj_data[3] >> 1);
+    data[6] = (rx_obj_data[3] >> 2);
+    data[7] = (rx_obj_data[3] >> 3);
+
+    // set UINC and TXREQ
+    addr = MCP2518FD_REG_CiFIFOCON + (1 * MCP2518FD_FIFO_REG_STRIDE);
+    mcp2518fd_write_byte(addr + 1, 0b11);
+
+    return 0;
 }
