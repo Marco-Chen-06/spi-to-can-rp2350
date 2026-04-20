@@ -8,12 +8,17 @@
  * Registers and defines for mcp2518fd driver
 */
 
+#ifndef MCP2518FD_HW_H
+#define MCP2518FD_HW_H
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
 #include "hardware/timer.h"
 #include "hardware/spi.h"
+#include "mcp2518fd.h"
 
 #define BUF_LEN 256
 #define MSG_SIZE 8u
@@ -58,8 +63,6 @@ NOTE: WHEN ACCESSING RAM (DATA) it must be 4 byte aligned (use padding here)
  *   - Bit timing calculations
  ******************************************************************************/
 
-#ifndef MCP2518FD_HW_H
-#define MCP2518FD_HW_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -205,20 +208,6 @@ typedef union {
     uint32_t word;
     uint8_t  byte[4];
 } REG_CiCON;
-
-//the following is a custom enum for easy-to-understand modes to set opmode bit in CiCON register to change CAN modes
-
-typedef enum {
-    CAN_NORMAL_MODE = 0b000,
-    CAN_SLEEP_MODE = 0b001,
-    CAN_INTERNAL_LOOPBACK_MODE = 0b010,
-    CAN_LISTEN_ONLY_MODE = 0b011,
-    CAN_CONFIGURATION_MODE = 0b100,
-    CAN_EXTERNAL_LOOPBACK_MODE = 0b101,
-    CAN_CLASSIC_MODE = 0b110,
-    CAN_RESTRICTED_MODE = 0b111
-} CAN_OPERATION_MODE;
-
 
 /*--- Nominal Bit Time Configuration (CiNBTCFG) at 0x004 -------------------*/
 typedef union {
@@ -563,27 +552,6 @@ typedef union {
     uint8_t byte;
 } REG_CiFLTCON_BYTE;
 
-
-//! CAN Filter Object ID
-
-typedef struct _CAN_FILTEROBJ_ID {
-    uint32_t SID : 11;
-    uint32_t EID : 18;
-    uint32_t SID11 : 1;
-    uint32_t EXIDE : 1;
-    uint32_t unimplemented1 : 1;
-} CAN_FILTEROBJ_ID;
-
-//! CAN Mask Object ID
-
-typedef struct _CAN_MASKOBJ_ID {
-    uint32_t MSID : 11;
-    uint32_t MEID : 18;
-    uint32_t MSID11 : 1;
-    uint32_t MIDE : 1;
-    uint32_t unimplemented1 : 1;
-} CAN_MASKOBJ_ID;
-
 // *****************************************************************************
 //! Filter Object Register
 
@@ -708,62 +676,6 @@ typedef union {
     uint32_t word;
     uint8_t  byte[4];
 } REG_DEVID;
-
-/* Start of extra structs that Marco added from mcp25XXfd application code */
-typedef struct CAN_MSGOBJ_ID {
-    uint32_t SID : 11;
-    uint32_t EID : 18;
-    uint32_t SID11: 1;
-    uint32_t unimplemented1 : 2;
-} CAN_MSGOBJ_ID;
-
-typedef struct CAN_TX_MSGOBJ_CTRL {
-    uint32_t DLC : 4;
-    uint32_t IDE : 1;
-    uint32_t RTR : 1;
-    uint32_t BRS : 1;
-    uint32_t FDF : 1;
-    uint32_t ESI: 1;
-    uint32_t SEQ : 23;
-} CAN_TX_MSGOBJ_CTRL;
-
-/* -- Transmit Message Object (TXQ and TX FIFO) ------------------------------*/
-/* This is from MCP25XXFD Datasheet, page 27 and MCP2518FD Datasheet, page 66 */
-typedef union {
-    struct {
-        CAN_MSGOBJ_ID id;
-        CAN_TX_MSGOBJ_CTRL ctrl;
-        uint32_t timeStamp;
-    } bF;
-    uint32_t word[3];
-    uint8_t byte[12];
-} CAN_TX_MSGOBJ;
-
-//! CAN RX Message Object Control
-
-typedef struct _CAN_RX_MSGOBJ_CTRL {
-    uint32_t DLC : 4;
-    uint32_t IDE : 1;
-    uint32_t RTR : 1;
-    uint32_t BRS : 1;
-    uint32_t FDF : 1;
-    uint32_t ESI : 1;
-    uint32_t unimplemented1 : 2;
-    uint32_t FilterHit : 5;
-    uint32_t unimplemented2 : 16;
-} CAN_RX_MSGOBJ_CTRL;
-
-typedef union _CAN_RX_MSGOBJ {
-
-    struct {
-        CAN_MSGOBJ_ID id;
-        CAN_RX_MSGOBJ_CTRL ctrl;
-        uint32_t timeStamp;
-    } bF;
-    uint32_t word[3];
-    uint8_t byte[12];
-} CAN_RX_MSGOBJ;
-
 
 
 /* End of extra structs that Marco added from mcp25XXfd application code */
