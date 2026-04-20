@@ -281,3 +281,46 @@ void mcp2518fd_opmode_select(CAN_OPERATION_MODE opmode) {
         }
     }
 }   
+
+int8_t mcp2518fd_configure(CAN_CONFIG* config) {
+    REG_CiCON ciCon;
+    
+    ciCon.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiCON/4];
+    ciCon.bF.DNetFilterCount = config->DNetFilterCount;
+    ciCon.bF.IsoCrcEnable = config->IsoCrcEnable;
+    ciCon.bF.ProtocolExceptionEventDisable = config->ProtocolExpectionEventDisable;
+    ciCon.bF.WakeUpFilterEnable = config->WakeUpFilterEnable;
+    ciCon.bF.WakeUpFilterTime = config->WakeUpFilterTime;
+    ciCon.bF.BitRateSwitchDisable = config->BitRateSwitchDisable;
+    ciCon.bF.RestrictReTxAttempts = config->RestrictReTxAttempts;
+    ciCon.bF.EsiInGatewayMode = config->EsiInGatewayMode;
+    ciCon.bF.SystemErrorToListenOnly = config->SystemErrorToListenOnly;
+    ciCon.bF.StoreInTEF = config->StoreInTEF;
+    ciCon.bF.TXQEnable = config->TXQEnable;
+    ciCon.bF.TxBandWidthSharing = config->TxBandWidthSharing;
+
+    mcp2518fd_write_word(MCP2518FD_REG_CiCON, ciCon.word);
+
+    return 0;
+}
+
+int8_t mcp2518fd_configure_reset(CAN_CONFIG* config) {
+    REG_CiCON ciCon;
+    ciCon.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiCON/4];
+
+    ciCon.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiCON/4];
+    ciCon.bF.DNetFilterCount = config->DNetFilterCount;
+    ciCon.bF.IsoCrcEnable = config->IsoCrcEnable;
+    ciCon.bF.ProtocolExceptionEventDisable = config->ProtocolExpectionEventDisable;
+    ciCon.bF.WakeUpFilterEnable = config->WakeUpFilterEnable;
+    ciCon.bF.WakeUpFilterTime = config->WakeUpFilterTime;
+    ciCon.bF.BitRateSwitchDisable = config->BitRateSwitchDisable;
+    ciCon.bF.RestrictReTxAttempts = config->RestrictReTxAttempts;
+    ciCon.bF.EsiInGatewayMode = config->EsiInGatewayMode;
+    ciCon.bF.SystemErrorToListenOnly = config->SystemErrorToListenOnly;
+    ciCon.bF.StoreInTEF = config->StoreInTEF;
+    ciCon.bF.TXQEnable = config->TXQEnable;
+    ciCon.bF.TxBandWidthSharing = config->TxBandWidthSharing;
+
+    return 0;
+}
