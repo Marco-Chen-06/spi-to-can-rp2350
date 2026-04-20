@@ -17,10 +17,12 @@
 
 void blink_builtin_init();
 void blink_builtin(int delay_ms);
-// int test_read_write();
-// int mcp2518fd_tx_fifo_test();
-int mcp2518fd_rx_init_test();
-int mcp2518fd_rx_fifo_test(uint8_t *data);
+// int8_t test_tx();
+// int8_t test_read_write();
+// int8_t test_read_write();
+// int8_t mcp2518fd_tx_fifo_test();
+int8_t mcp2518fd_rx_init_test();
+int8_t mcp2518fd_rx_fifo_test(uint8_t *data);
 
 int main() {
     stdio_init_all();
@@ -56,7 +58,7 @@ void blink_builtin(int delay_ms) {
 }
 
 // archived test of checking transmission
-int test_tx() {
+int8_t test_tx() {
     blink_builtin_init(); 
 
     mcp2518fd_init(SPI_CLK_RATE);
@@ -71,7 +73,7 @@ int test_tx() {
 
 
 // archived test of checking of read/write works
-int test_read_write() {
+int8_t test_read_write() {
     // read ciCon data from mcp2518fd
     uint32_t data = 0;
     mcp2518fd_read_word(MCP2518FD_REG_CiCON, &data);
@@ -98,7 +100,7 @@ int test_read_write() {
 // that fifo1 is a tx fifo with 8 byte payload
 // DO NOT USE!!!
 // return value: error code
-int mcp2518fd_tx_fifo_test() {
+int8_t mcp2518fd_tx_fifo_test() {
     // first section: load message into transmit fifo
 
     // initialize ID and control bits
@@ -190,7 +192,7 @@ int mcp2518fd_tx_fifo_test() {
 // this function sets up filter object 0 and mask object 0 with hardcoded values
 // It captures frames with SID from 0x200 - 0x20F and points the filter to FIFO2
 // return value: error code
-int mcp2518fd_rx_init_test() {
+int8_t mcp2518fd_rx_init_test() {
     // first section: configure filter0 and mask0 to match standard
     // frames with SID 0x200 - 0x20F
     uint16_t filter_num = 0;
@@ -231,7 +233,7 @@ int mcp2518fd_rx_init_test() {
 }
 
 // this function tests RX based on settings from mcp2518fd_rx_init_test
-int mcp2518fd_rx_fifo_test(uint8_t *data) {
+int8_t mcp2518fd_rx_fifo_test(uint8_t *data) {
     uint16_t fifo_channel_num = 2; // fifo channel number to receive the data
     
     // second section: receive the message and store it in data
