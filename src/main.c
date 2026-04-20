@@ -22,12 +22,13 @@ void blink_builtin(int delay_ms);
 int8_t mcp2518fd_tx_fifo_test();
 int8_t mcp2518fd_rx_init_test();
 int8_t mcp2518fd_rx_fifo_test(uint8_t *data);
+int8_t mcp2518fd_init_test(uint32_t spi_clk_rate);
 
 int main() {
     stdio_init_all();
     blink_builtin_init(); 
 
-    mcp2518fd_init(SPI_CLK_RATE);
+    mcp2518fd_init_test(SPI_CLK_RATE);
 
     mcp2518fd_rx_init_test();
 
@@ -274,6 +275,111 @@ int8_t mcp2518fd_rx_fifo_test(uint8_t *data) {
     // set UINC
     addr = MCP2518FD_REG_CiFIFOCON + (fifo_channel_num * MCP2518FD_FIFO_REG_STRIDE);
     mcp2518fd_write_byte(addr + 1, 0b01);
+
+    return 0;
+}
+
+/* exact copy of mcp2518fd_init, but this time im slowly changing out the
+   hardcoded configuration for general API calls
+*/
+int8_t mcp2518fd_init_test(uint32_t spi_clk_rate) {
+     /*
+      I won't be doing error checking for the writes and reads because the internal
+      spi_write_read_blocking function never returns anything other than the number
+      of bytes transmitted/received. If ou want to see this, look inside pico SDK's 
+      spi_write_read_blocking function and it only returns "len", no matter what. 
+    */
+   
+    // Initialize RP2350 SPI peripheral
+    stdio_init_all();
+
+    // Enable SPI 0 at specified clock rate and connect to GPIOs
+    uint32_t real_baudrate = spi_init(spi_default, spi_clk_rate);
+
+    // Set SPI to (0,0) mode
+    spi_set_format(spi_default, MSG_SIZE, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
+
+    gpio_set_function(PICO_DEFAULT_SPI_RX_PIN, GPIO_FUNC_SPI); // SPI0RX GP16
+    gpio_set_function(PICO_DEFAULT_SPI_TX_PIN, GPIO_FUNC_SPI); // SPI0TX GP19
+    gpio_set_function(PICO_DEFAULT_SPI_SCK_PIN, GPIO_FUNC_SPI); // SPI0SCK GP18
+
+    // gpio_pull_up(PICO_DEFAULT_SPI_RX_PIN);
+    // gpio_pull_up(PICO_DEFAULT_SPI_TX_PIN);
+
+    gpio_set_function(PICO_DEFAULT_SPI_CSN_PIN, GPIO_FUNC_SIO); // SPICSN GP17
+    gpio_set_dir(PICO_DEFAULT_SPI_CSN_PIN, GPIO_OUT);
+    gpio_put(PICO_DEFAULT_SPI_CSN_PIN, HIGH);
+
+
+    mcp2518fd_reset();
+
+    // oscillator configuration, CLKO divisor 1, SCLK divisor 1, PLL disabled
+    // SOLDERED CAN breakout board has 40 MHz internal oscillator, so no divisors or PLL needed
+    REG_OSC osc;
+    osc.word = mcp2518fd_specific_reset_vals[0]; 
+    osc.bF.CLKODIV = 0b00;
+    osc.bF.SCLKDIV = 0b0;
+    osc.bF.PllEnable = 0b0;
+    mcp2518fd_write_word(MCP2518FD_REG_OSC, osc.word);
+
+    // check for osc_ready bit to be set (no timeout because I haven't implemented timers)
+    uint8_t osc_data = 0;
+    while (1) {
+        mcp2518fd_read_byte(MCP2518FD_REG_OSC + 1, &osc_data);
+        if (osc_data & 0x04) {
+            break;
+        }
+    }
+
+    // I/O configuration, GPIO0 and GPIO1 to be both inputs 
+    // also, bit fields in the IOCON register must be written using single data byte SFR WRITE instructions
+    REG_IOCON iocon;
+    iocon.word = mcp2518fd_specific_reset_vals[1];
+    mcp2518fd_write_byte(MCP2518FD_REG_IOCON, *iocon.byte); 
+
+    // CAN configuration, disable crc, disable TXQ, disable TEF
+    REG_CiCON ciCon;
+    ciCon.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiCON / 4];
+    ciCon.bF.IsoCrcEnable = 0; 
+    ciCon.bF.StoreInTEF = 0; 
+    ciCon.bF.TXQEnable = 0;
+    mcp2518fd_write_word(MCP2518FD_REG_CiCON, ciCon.word);
+
+    // matthew nominal bit timing config 
+    // I think this is 500Kbps, 80% sample point
+    REG_CiNBTCFG ciNbtcfg;
+    ciNbtcfg.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiNBTCFG / 4];
+    ciNbtcfg.bF.SJW = 15;
+    ciNbtcfg.bF.TSEG2 = 15;
+    ciNbtcfg.bF.TSEG1 = 62;
+    ciNbtcfg.bF.BRP = 0; // baudrate prescaler of 1
+    mcp2518fd_write_word(MCP2518FD_REG_CiNBTCFG, ciNbtcfg.word);
+
+    // Fifo 1: transmit fifo; 5 messages, 8 byte max payload, high priority
+    REG_CiFIFOCON ciFifocon1;
+    ciFifocon1.word = mcp2518fd_fifo_reset_vals[0];
+    ciFifocon1.txBF.TxEnable = 1;
+    ciFifocon1.txBF.FifoSize = 4;
+    ciFifocon1.txBF.PayLoadSize = 0b000;
+    ciFifocon1.txBF.TxPriority = 1;
+    mcp2518fd_write_word(MCP2518FD_REG_CiFIFOCON + (1 * MCP2518FD_FIFO_REG_STRIDE), ciFifocon1.word);
+    
+    // Fifo 2: receive fifo; 16 messages, 8 byte max payload, time stamping disabled
+    REG_CiFIFOCON ciFifocon2;
+    ciFifocon2.word = mcp2518fd_fifo_reset_vals[0];
+    ciFifocon2.rxBF.TxEnable = 0;
+    ciFifocon2.rxBF.FifoSize = 15;
+    ciFifocon2.rxBF.PayLoadSize = 0b000;
+    ciFifocon2.rxBF.RxTimeStampEnable = 0;
+    mcp2518fd_write_word(MCP2518FD_REG_CiFIFOCON + (2 * MCP2518FD_FIFO_REG_STRIDE), ciFifocon2.word);
+
+
+    // Initialize RAM
+    mcp2518fd_ram_init(0x00);
+
+    // Select Normal Mode
+    mcp2518fd_opmode_select(CAN_NORMAL_MODE);
+    // mcp2518fd_opmode_select(CAN_NORMAL_MODE);
 
     return 0;
 }
