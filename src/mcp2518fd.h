@@ -1,5 +1,13 @@
+/* 
+  Long term todo: Update all functions to allow choosing which CAN module 
+  you want (can0, can1, ...), this will need updating the spi intructions too.
+
+  In addition, add a function that lets you write SPI in arrays because thats
+  more efficient then writing 1 word at at time in some cases.
+*/
+
 /*
- * MCP2518FD_internal.h
+ * MCP2518FD.h
  * API and implementation for mcp2518fd driver
 */
 
@@ -24,6 +32,22 @@ typedef enum {
     CAN_CLASSIC_MODE = 0b110,
     CAN_RESTRICTED_MODE = 0b111
 } CAN_OPERATION_MODE;
+
+//! CAN Configure
+typedef struct _CAN_CONFIG {
+    uint32_t DNetFilterCount : 5;
+    uint32_t IsoCrcEnable : 1;
+    uint32_t ProtocolExpectionEventDisable : 1;
+    uint32_t WakeUpFilterEnable : 1;
+    uint32_t WakeUpFilterTime : 2;
+    uint32_t BitRateSwitchDisable : 1;
+    uint32_t RestrictReTxAttempts : 1;
+    uint32_t EsiInGatewayMode : 1;
+    uint32_t SystemErrorToListenOnly : 1;
+    uint32_t StoreInTEF : 1;
+    uint32_t TXQEnable : 1;
+    uint32_t TxBandWidthSharing : 4;
+} CAN_CONFIG;
 
 //! CAN Message Object ID
 typedef struct CAN_MSGOBJ_ID {
@@ -117,13 +141,22 @@ uint8_t mcp2518fd_write_word(uint16_t addr, uint32_t data);
 int8_t mcp2518fd_init(uint32_t spi_clk_rate);
 void mcp2518fd_reset();
 void mcp2518fd_ram_init(uint8_t data);
-void mcp2518fd_opmode_select(CAN_OPERATION_MODE opmode);
 
 /*
- Abstracted CAN interface functions
+ Abstracted CAN interface functions (API functions)
  These functions use the read/write initialization functions defined above
  to create a CAN abstraction layer. 
 */
+
+int8_t mcp2518fd_configure(CAN_CONFIG* config);
+int8_t mcp2518fd_configure_reset(CAN_CONFIG* config);
+
+void mcp2518fd_opmode_select(CAN_OPERATION_MODE opmode);
+
+// TODO: Implement paraeters: CAN_FIFO_CHANNEL channel, CAN_RX_MSGOBJ* rxObj,
+// uint8_t *rxd, uint8_t nBytes
+int8_t mcp2518fd_receive_message();
+
 
 
 

@@ -19,8 +19,7 @@ void blink_builtin_init();
 void blink_builtin(int delay_ms);
 // int8_t test_tx();
 // int8_t test_read_write();
-// int8_t test_read_write();
-// int8_t mcp2518fd_tx_fifo_test();
+int8_t mcp2518fd_tx_fifo_test();
 int8_t mcp2518fd_rx_init_test();
 int8_t mcp2518fd_rx_fifo_test(uint8_t *data);
 
@@ -92,6 +91,7 @@ int8_t test_read_write() {
       blink_builtin(500);
     }
 }
+
 
 
 // this function is just for testing creating a tx object and sending it.
