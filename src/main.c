@@ -20,7 +20,7 @@ void blink_builtin(int delay_ms);
 // int test_read_write();
 // int mcp2518fd_tx_fifo_test();
 int mcp2518fd_rx_init_test();
-int mcp2518fd_rx_init_test();
+int mcp2518fd_rx_fifo_test(uint8_t *data);
 
 int main() {
     stdio_init_all();
