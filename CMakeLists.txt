@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.13)
 
 set(PICO_BOARD pico2)
 
+# default to debug build (-DCMAKE_BUILD_TYPE=Debug flag)
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+endif()
+
 include(pico_sdk_import.cmake)
 
 project(spi-to-can-transceiver C CXX ASM)

@@ -27,6 +27,7 @@ int main() {
 
     mcp2518fd_rx_init_test();
 
+    printf("\n-----STARTING TEST-----\n");
     uint8_t databuf[8];
     for (;;) {
       mcp2518fd_rx_fifo_test(databuf);
