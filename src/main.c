@@ -30,9 +30,11 @@ int main() {
     uint8_t databuf[8];
     for (;;) {
       mcp2518fd_rx_fifo_test(databuf);
+      printf("Out (Decimal): ");
       for (int i = 0; i < 8; i++) {
-        printf("Out: %d\n", databuf[i]);
+        printf("%d ", databuf[i]);
       }
+      printf("\n");
       blink_builtin(500);
     }
 }
