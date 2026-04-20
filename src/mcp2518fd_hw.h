@@ -727,7 +727,13 @@ static const uint32_t mcp2518fd_specific_reset_vals[] = {
     /* 0xE10 ECCSTA */ 0x00000000
 };
 
+// Filter Control Register Reset Values
+const static uint32_t canFilterControlResetValue = 0x00000000;
 
+// Filter and Mask Object Reset Values
+const static uint32_t canFilterObjectResetValues[] = {
+    0x00000000, 0x00000000
+};
 
 #ifdef __cplusplus
 }
