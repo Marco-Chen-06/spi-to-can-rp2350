@@ -303,21 +303,28 @@ int8_t mcp2518fd_init_test(uint32_t spi_clk_rate)
 
 	// oscillator configuration, CLKO divisor 1, SCLK divisor 1, PLL disabled
 	// SOLDERED CAN breakout board has 40 MHz internal oscillator, so no divisors or PLL needed
-	REG_OSC osc;
-	osc.word = mcp2518fd_specific_reset_vals[0];
-	osc.bF.CLKODIV = 0b00;
-	osc.bF.SCLKDIV = 0b0;
-	osc.bF.PllEnable = 0b0;
-	mcp2518fd_write_word(MCP2518FD_REG_OSC, osc.word);
+	CAN_OSC_CTRL osc;
+	mcp2518fd_osc_configure_reset(&osc);
+	osc.CLKODIV = 0b00;
+	osc.SCLKDIV = 0b0;
+	osc.PllEnable = 0b0;
+	mcp2518fd_osc_configure(&osc);
 
-	// check for osc_ready bit to be set (no timeout because I haven't implemented timers)
-	uint8_t osc_data = 0;
-	while (1) {
-		mcp2518fd_read_byte(MCP2518FD_REG_OSC + 1, &osc_data);
-		if (osc_data & 0x04) {
-			break;
-		}
-	}
+	// REG_OSC osc;
+	// osc.word = mcp2518fd_specific_reset_vals[0];
+	// osc.bF.CLKODIV = 0b00;
+	// osc.bF.SCLKDIV = 0b0;
+	// osc.bF.PllEnable = 0b0;
+	// mcp2518fd_write_word(MCP2518FD_REG_OSC, osc.word);
+
+	// // check for osc_ready bit to be set (no timeout because I haven't implemented timers)
+	// uint8_t osc_data = 0;
+	// while (1) {
+	// 	mcp2518fd_read_byte(MCP2518FD_REG_OSC + 1, &osc_data);
+	// 	if (osc_data & 0x04) {
+	// 		break;
+	// 	}
+	// }
 
 	// I/O configuration, GPIO0 and GPIO1 to be both inputs
 	// also, bit fields in the IOCON register must be written using single data byte SFR WRITE instructions
@@ -334,15 +341,6 @@ int8_t mcp2518fd_init_test(uint32_t spi_clk_rate)
 	mcp2518fd_configure(&ciCon);
 
 	mcp2518fd_configure_bit_time_40MHz(CAN_NBT_500K);
-	// // matthew nominal bit timing config
-	// // I think this is 500Kbps, 80% sample point
-	// REG_CiNBTCFG ciNbtcfg;
-	// ciNbtcfg.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiNBTCFG / 4];
-	// ciNbtcfg.bF.SJW = 15;
-	// ciNbtcfg.bF.TSEG2 = 15;
-	// ciNbtcfg.bF.TSEG1 = 62;
-	// ciNbtcfg.bF.BRP = 0; // baudrate prescaler of 1
-	// mcp2518fd_write_word(MCP2518FD_REG_CiNBTCFG, ciNbtcfg.word);
 
 	// Fifo 1: transmit fifo; 5 messages, 8 byte max payload, high priority
 	REG_CiFIFOCON ciFifocon1;

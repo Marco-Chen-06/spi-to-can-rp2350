@@ -317,18 +317,64 @@ int8_t mcp2518fd_configure_reset(CAN_CONFIG *config)
 	REG_CiCON ciCon;
 
 	ciCon.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiCON / 4];
-	ciCon.bF.DNetFilterCount = config->DNetFilterCount;
-	ciCon.bF.IsoCrcEnable = config->IsoCrcEnable;
-	ciCon.bF.ProtocolExceptionEventDisable = config->ProtocolExpectionEventDisable;
-	ciCon.bF.WakeUpFilterEnable = config->WakeUpFilterEnable;
-	ciCon.bF.WakeUpFilterTime = config->WakeUpFilterTime;
-	ciCon.bF.BitRateSwitchDisable = config->BitRateSwitchDisable;
-	ciCon.bF.RestrictReTxAttempts = config->RestrictReTxAttempts;
-	ciCon.bF.EsiInGatewayMode = config->EsiInGatewayMode;
-	ciCon.bF.SystemErrorToListenOnly = config->SystemErrorToListenOnly;
-	ciCon.bF.StoreInTEF = config->StoreInTEF;
-	ciCon.bF.TXQEnable = config->TXQEnable;
-	ciCon.bF.TxBandWidthSharing = config->TxBandWidthSharing;
+
+	config->DNetFilterCount = ciCon.bF.DNetFilterCount;
+	config->IsoCrcEnable = ciCon.bF.IsoCrcEnable;
+	config->ProtocolExpectionEventDisable = ciCon.bF.ProtocolExceptionEventDisable;
+	config->WakeUpFilterEnable = ciCon.bF.WakeUpFilterEnable;
+	config->WakeUpFilterTime = ciCon.bF.WakeUpFilterTime;
+	config->BitRateSwitchDisable = ciCon.bF.BitRateSwitchDisable;
+	config->RestrictReTxAttempts = ciCon.bF.RestrictReTxAttempts;
+	config->EsiInGatewayMode = ciCon.bF.EsiInGatewayMode;
+	config->SystemErrorToListenOnly = ciCon.bF.SystemErrorToListenOnly;
+	config->StoreInTEF = ciCon.bF.StoreInTEF;
+	config->TXQEnable = ciCon.bF.TXQEnable;
+	config->TxBandWidthSharing = ciCon.bF.TxBandWidthSharing;
+
+	return 0;
+}
+
+int8_t mcp2518fd_osc_configure(CAN_OSC_CTRL *config)
+{
+	REG_OSC osc;
+
+	osc.word = mcp2518fd_specific_reset_vals[0];
+	osc.bF.PllEnable = config->PllEnable;
+	osc.bF.OscDisable = config->OscDisable;
+	osc.bF.LowPowerModeEnable = config->LowPowerModeEnable;
+	osc.bF.SCLKDIV = config->SCLKDIV;
+	osc.bF.CLKODIV = config->CLKODIV;
+	osc.bF.PllReady = config->PllReady;
+	osc.bF.OscReady = config->OscReady;
+	osc.bF.SclkReady = config->SclkReady;
+
+	mcp2518fd_write_word(MCP2518FD_REG_OSC, osc.word);
+
+	// check for osc_ready bit to be set (no timeout bc I haven't implemented timers)
+	uint8_t osc_data;
+	while (1) {
+		mcp2518fd_read_byte(MCP2518FD_REG_OSC + 1, &osc_data);
+		// check if osc_ready bit is set
+		if (osc_data & 0x04) {
+			break;
+		}
+	}
+	return 0;
+}
+
+int8_t mcp2518fd_osc_configure_reset(CAN_OSC_CTRL *config)
+{
+	REG_OSC osc;
+
+	osc.word = mcp2518fd_specific_reset_vals[0];
+	config->PllEnable = osc.bF.PllEnable;
+	config->OscDisable = osc.bF.OscDisable;
+	config->LowPowerModeEnable = osc.bF.LowPowerModeEnable;
+	config->SCLKDIV = osc.bF.SCLKDIV;
+	config->CLKODIV = osc.bF.CLKODIV;
+	config->PllReady = osc.bF.PllReady;
+	config->OscReady = osc.bF.OscReady;
+	config->SclkReady = osc.bF.SclkReady;
 
 	return 0;
 }
@@ -338,7 +384,8 @@ int8_t mcp2518fd_configure_bit_time_40MHz(CAN_NOMINAL_BITTIME_SETUP bit_time)
 	REG_CiNBTCFG ciNbtcfg;
 	ciNbtcfg.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiNBTCFG / 4];
 
-	// set different ciNbtcfg values for different bit times for 40Mhz SYSCLK
+	// set different ciNbtcfg values for different bit times for 40Mhz SYSCLK,
+	// 80% sample point, all numbers taken from mcp2518fd manufacturer code
 	switch (bit_time) {
 	case CAN_NBT_125K:
 		ciNbtcfg.bF.BRP = 0;
@@ -372,12 +419,3 @@ int8_t mcp2518fd_configure_bit_time_40MHz(CAN_NOMINAL_BITTIME_SETUP bit_time)
 	mcp2518fd_write_word(MCP2518FD_REG_CiNBTCFG, ciNbtcfg.word);
 	return 0;
 }
-// CAN_NBT_125K, CAN_NBT_250K, CAN_NBT_500K, CAN_NBT_1M }
-
-// REG_CiNBTCFG ciNbtcfg;
-// 	ciNbtcfg.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiNBTCFG / 4];
-// 	ciNbtcfg.bF.SJW = 15;
-// 	ciNbtcfg.bF.TSEG2 = 15;
-// 	ciNbtcfg.bF.TSEG1 = 62;
-// 	ciNbtcfg.bF.BRP = 0; // baudrate prescaler of 1
-// 	mcp2518fd_write_word(MCP2518FD_REG_CiNBTCFG, ciNbtcfg.word);
