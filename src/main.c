@@ -289,13 +289,6 @@ int8_t mcp2518fd_rx_fifo_test(uint8_t *data)
 */
 int8_t mcp2518fd_init_test(uint32_t spi_clk_rate)
 {
-	/*
-      I won't be doing error checking for the writes and reads because the internal
-      spi_write_read_blocking function never returns anything other than the number
-      of bytes transmitted/received. If ou want to see this, look inside pico SDK's 
-      spi_write_read_blocking function and it only returns "len", no matter what. 
-    */
-
 	// Initialize RP2350 SPI peripheral
 	mcp2518fd_spi_init(spi_clk_rate);
 
@@ -325,25 +318,19 @@ int8_t mcp2518fd_init_test(uint32_t spi_clk_rate)
 
 	mcp2518fd_configure_bit_time_40MHz(CAN_NBT_500K);
 
-	// Fifo 1: transmit fifo; 5 messages, 8 byte max payload, high priority
-	REG_CiFIFOCON ciFifocon1;
-	ciFifocon1.word = mcp2518fd_fifo_reset_vals[0];
-	ciFifocon1.txBF.TxEnable = 1;
-	ciFifocon1.txBF.FifoSize = 4;
-	ciFifocon1.txBF.PayLoadSize = 0b000;
-	ciFifocon1.txBF.TxPriority = 1;
-	mcp2518fd_write_word(MCP2518FD_REG_CiFIFOCON + (1 * MCP2518FD_FIFO_REG_STRIDE),
-			     ciFifocon1.word);
+	CAN_TX_FIFO_CONFIG ciFifocon1;
+	mcp2518fd_tx_fifo_configure_reset(&ciFifocon1);
+	ciFifocon1.FifoSize = 4;
+	ciFifocon1.PayLoadSize = 0b000;
+	ciFifocon1.TxPriority = 1;
+	mcp2518fd_tx_fifo_configure(CAN_FIFO_CH1, &ciFifocon1);
 
-	// Fifo 2: receive fifo; 16 messages, 8 byte max payload, time stamping disabled
-	REG_CiFIFOCON ciFifocon2;
-	ciFifocon2.word = mcp2518fd_fifo_reset_vals[0];
-	ciFifocon2.rxBF.TxEnable = 0;
-	ciFifocon2.rxBF.FifoSize = 15;
-	ciFifocon2.rxBF.PayLoadSize = 0b000;
-	ciFifocon2.rxBF.RxTimeStampEnable = 0;
-	mcp2518fd_write_word(MCP2518FD_REG_CiFIFOCON + (2 * MCP2518FD_FIFO_REG_STRIDE),
-			     ciFifocon2.word);
+	CAN_RX_FIFO_CONFIG ciFifocon2;
+	mcp2518fd_rx_fifo_configure_reset(&ciFifocon2);
+	ciFifocon2.FifoSize = 15;
+	ciFifocon2.PayLoadSize = 0b000;
+	ciFifocon2.RxTimeStampEnable = 0;
+	mcp2518fd_rx_fifo_configure(CAN_FIFO_CH2, &ciFifocon2);
 
 	// Initialize RAM
 	mcp2518fd_ram_init(0x00);

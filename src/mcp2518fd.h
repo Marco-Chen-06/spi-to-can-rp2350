@@ -22,6 +22,47 @@
 
 /* structs and enums for API, mainly taken from mcp25XXfd application code*/
 
+//! CAN FIFO Channels
+
+typedef enum {
+	CAN_FIFO_CH0, // CAN_TXQUEUE_CH0
+	CAN_FIFO_CH1,
+	CAN_FIFO_CH2,
+	CAN_FIFO_CH3,
+	CAN_FIFO_CH4,
+	CAN_FIFO_CH5,
+	CAN_FIFO_CH6,
+	CAN_FIFO_CH7,
+	CAN_FIFO_CH8,
+	CAN_FIFO_CH9,
+	CAN_FIFO_CH10,
+	CAN_FIFO_CH11,
+	CAN_FIFO_CH12,
+	CAN_FIFO_CH13,
+	CAN_FIFO_CH14,
+	CAN_FIFO_CH15,
+	CAN_FIFO_CH16,
+	CAN_FIFO_CH17,
+	CAN_FIFO_CH18,
+	CAN_FIFO_CH19,
+	CAN_FIFO_CH20,
+	CAN_FIFO_CH21,
+	CAN_FIFO_CH22,
+	CAN_FIFO_CH23,
+	CAN_FIFO_CH24,
+	CAN_FIFO_CH25,
+	CAN_FIFO_CH26,
+	CAN_FIFO_CH27,
+	CAN_FIFO_CH28,
+	CAN_FIFO_CH29,
+	CAN_FIFO_CH30,
+	CAN_FIFO_CH31,
+	CAN_FIFO_TOTAL_CHANNELS
+} CAN_FIFO_CHANNEL;
+
+// FIFO0 is a special FIFO, the TX Queue
+#define CAN_TXQUEUE_CH0 CAN_FIFO_CH0
+
 typedef enum {
 	CAN_NORMAL_MODE = 0b000,
 	CAN_SLEEP_MODE = 0b001,
@@ -52,26 +93,6 @@ typedef struct _CAN_CONFIG {
 	uint32_t TXQEnable : 1;
 	uint32_t TxBandWidthSharing : 4;
 } CAN_CONFIG;
-// /*--- Oscillator Register (OSC) at 0xE00 -----------------------------------*/
-// typedef union {
-//     struct {
-//         uint32_t PllEnable          : 1;  /* bit  0  - Enable PLL (×10 from XTAL)      */
-//         uint32_t unimplemented1     : 1;
-//         uint32_t OscDisable         : 1;  /* bit  2  - Disable oscillator              */
-//         uint32_t LowPowerModeEnable : 1;  /* bit  3  - Low power mode (MCP2518FD only) */
-//         uint32_t SCLKDIV            : 1;  /* bit  4  - System clock divisor (1 or 2)   */
-//         uint32_t CLKODIV            : 2;  /* bits 6:5 - Clock output divisor           */
-//         uint32_t unimplemented2     : 1;
-//         uint32_t PllReady           : 1;  /* bit  8  - PLL locked (read only)          */
-//         uint32_t unimplemented3     : 1;
-//         uint32_t OscReady           : 1;  /* bit 10  - Oscillator running (read only)  */
-//         uint32_t unimplemented4     : 1;
-//         uint32_t SclkReady          : 1;  /* bit 12  - System clock stable (read only) */
-//         uint32_t unimplemented5     : 19;
-//     } bF;
-//     uint32_t word;
-//     uint8_t  byte[4];
-// } REG_OSC;
 
 //! Oscillator Conrol
 typedef struct _CAN_OSC_CTRL {
@@ -90,6 +111,7 @@ typedef struct _CAN_OSC_CTRL {
 	uint32_t unimplemented5 : 19;
 } CAN_OSC_CTRL;
 
+// input-output control based on IOCON
 typedef struct _CAN_IO_CTRL {
 	uint32_t TRIS0 : 1; /* bit  0  - GPIO0 direction (0=out, 1=in)   */
 	uint32_t TRIS1 : 1; /* bit  1  - GPIO1 direction                 */
@@ -114,11 +136,24 @@ typedef struct _CAN_IO_CTRL {
 	uint32_t unimplemented6 : 1;
 } CAN_IO_CTRL;
 
+//! CAN Transmit Channel Configure
+typedef struct _CAN_TX_FIFO_CONFIG {
+	uint32_t RTREnable : 1;
+	uint32_t TxPriority : 5;
+	uint32_t TxAttempts : 2;
+	uint32_t FifoSize : 5;
+	uint32_t PayLoadSize : 3;
+} CAN_TX_FIFO_CONFIG;
+
+//! CAN Receive Channel Configure
+typedef struct _CAN_RX_FIFO_CONFIG {
+	uint32_t RxTimeStampEnable : 1;
+	uint32_t FifoSize : 5;
+	uint32_t PayLoadSize : 3;
+} CAN_RX_FIFO_CONFIG;
+
 /* NEED THE FOLLOWING CONFIGS:*/
 /* 
-reg_osc
-iocon
-ciNbtcfg
 ciFifocon1
 ciFifocon2
 
@@ -229,6 +264,11 @@ int8_t mcp2518fd_osc_configure(CAN_OSC_CTRL *config);
 int8_t mcp2518fd_osc_configure_reset(CAN_OSC_CTRL *config);
 int8_t mcp2518fd_io_configure(CAN_IO_CTRL *config);
 int8_t mcp2518fd_io_configure_reset(CAN_IO_CTRL *config);
+
+int8_t mcp2518fd_tx_fifo_configure(CAN_FIFO_CHANNEL channel, CAN_TX_FIFO_CONFIG *config);
+int8_t mcp2518fd_tx_fifo_configure_reset(CAN_TX_FIFO_CONFIG *config);
+int8_t mcp2518fd_rx_fifo_configure(CAN_FIFO_CHANNEL channel, CAN_RX_FIFO_CONFIG *config);
+int8_t mcp2518fd_rx_fifo_configure_reset(CAN_RX_FIFO_CONFIG *config);
 
 void mcp2518fd_opmode_select(CAN_OPERATION_MODE opmode);
 int8_t mcp2518fd_configure_bit_time_40MHz(CAN_NOMINAL_BITTIME_SETUP bit_time);

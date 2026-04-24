@@ -344,9 +344,6 @@ int8_t mcp2518fd_osc_configure(CAN_OSC_CTRL *config)
 	osc.bF.LowPowerModeEnable = config->LowPowerModeEnable;
 	osc.bF.SCLKDIV = config->SCLKDIV;
 	osc.bF.CLKODIV = config->CLKODIV;
-	osc.bF.PllReady = config->PllReady;
-	osc.bF.OscReady = config->OscReady;
-	osc.bF.SclkReady = config->SclkReady;
 
 	mcp2518fd_write_word(MCP2518FD_REG_OSC, osc.word);
 
@@ -372,9 +369,6 @@ int8_t mcp2518fd_osc_configure_reset(CAN_OSC_CTRL *config)
 	config->LowPowerModeEnable = osc.bF.LowPowerModeEnable;
 	config->SCLKDIV = osc.bF.SCLKDIV;
 	config->CLKODIV = osc.bF.CLKODIV;
-	config->PllReady = osc.bF.PllReady;
-	config->OscReady = osc.bF.OscReady;
-	config->SclkReady = osc.bF.SclkReady;
 
 	return 0;
 }
@@ -404,6 +398,8 @@ int8_t mcp2518fd_io_configure(CAN_IO_CTRL *config)
 	for (int i = 0; i < 4; i++) {
 		mcp2518fd_write_byte(MCP2518FD_REG_IOCON + i, iocon.byte[i]);
 	}
+
+	return 0;
 }
 
 int8_t mcp2518fd_io_configure_reset(CAN_IO_CTRL *config)
@@ -426,6 +422,77 @@ int8_t mcp2518fd_io_configure_reset(CAN_IO_CTRL *config)
 	config->TXCANOpenDrain = iocon.bF.TXCANOpenDrain;
 	config->SOFOutputEnable = iocon.bF.SOFOutputEnable;
 	config->INTPinOpenDrain = iocon.bF.INTPinOpenDrain;
+
+	return 0;
+}
+
+int8_t mcp2518fd_tx_fifo_configure(CAN_FIFO_CHANNEL channel, CAN_TX_FIFO_CONFIG *config)
+{
+	REG_CiFIFOCON ciFifocon;
+	ciFifocon.word = mcp2518fd_fifo_reset_vals[0];
+
+	ciFifocon.txBF.TxEnable = 1;
+	ciFifocon.txBF.FifoSize = config->FifoSize;
+	ciFifocon.txBF.PayLoadSize = config->PayLoadSize;
+	ciFifocon.txBF.TxAttempts = config->TxAttempts;
+	ciFifocon.txBF.TxPriority = config->TxPriority;
+	ciFifocon.txBF.RTREnable = config->RTREnable;
+
+	uint16_t addr = 0;
+	addr = MCP2518FD_REG_CiFIFOCON + (channel * MCP2518FD_FIFO_REG_STRIDE);
+
+	mcp2518fd_write_word(addr, ciFifocon.word);
+
+	return 0;
+}
+
+int8_t mcp2518fd_tx_fifo_configure_reset(CAN_TX_FIFO_CONFIG *config)
+{
+	REG_CiFIFOCON ciFifocon;
+	ciFifocon.word = mcp2518fd_fifo_reset_vals[0];
+
+	config->RTREnable = ciFifocon.txBF.RTREnable;
+	config->TxPriority = ciFifocon.txBF.TxPriority;
+	config->TxAttempts = ciFifocon.txBF.TxAttempts;
+	config->FifoSize = ciFifocon.txBF.FifoSize;
+	config->PayLoadSize = ciFifocon.txBF.PayLoadSize;
+
+	return 0;
+}
+
+int8_t mcp2518fd_rx_fifo_configure(CAN_FIFO_CHANNEL channel, CAN_RX_FIFO_CONFIG *config)
+{
+	// txqueue should not be used as a receive channel
+	if (channel == CAN_TXQUEUE_CH0) {
+		return -1;
+	}
+
+	REG_CiFIFOCON ciFifocon;
+	ciFifocon.word = mcp2518fd_fifo_reset_vals[0];
+
+	ciFifocon.rxBF.TxEnable = 0;
+	ciFifocon.rxBF.FifoSize = config->FifoSize;
+	ciFifocon.rxBF.PayLoadSize = config->PayLoadSize;
+	ciFifocon.rxBF.RxTimeStampEnable = config->RxTimeStampEnable;
+
+	uint16_t addr = 0;
+	addr = MCP2518FD_REG_CiFIFOCON + (channel * MCP2518FD_FIFO_REG_STRIDE);
+
+	mcp2518fd_write_word(addr, ciFifocon.word);
+
+	return 0;
+}
+
+int8_t mcp2518fd_rx_fifo_configure_reset(CAN_RX_FIFO_CONFIG *config)
+{
+	REG_CiFIFOCON ciFifocon;
+	ciFifocon.word = mcp2518fd_fifo_reset_vals[0];
+
+	config->FifoSize = ciFifocon.rxBF.FifoSize;
+	config->PayLoadSize = ciFifocon.rxBF.PayLoadSize;
+	config->RxTimeStampEnable = ciFifocon.rxBF.RxTimeStampEnable;
+
+	return 0;
 }
 
 int8_t mcp2518fd_configure_bit_time_40MHz(CAN_NOMINAL_BITTIME_SETUP bit_time)
@@ -456,9 +523,9 @@ int8_t mcp2518fd_configure_bit_time_40MHz(CAN_NOMINAL_BITTIME_SETUP bit_time)
 		break;
 	case CAN_NBT_1M:
 		ciNbtcfg.bF.BRP = 0;
-		ciNbtcfg.bF.TSEG1 = 254;
-		ciNbtcfg.bF.TSEG2 = 63;
-		ciNbtcfg.bF.SJW = 63;
+		ciNbtcfg.bF.TSEG1 = 30;
+		ciNbtcfg.bF.TSEG2 = 7;
+		ciNbtcfg.bF.SJW = 7;
 		break;
 	default:
 		return -1;
