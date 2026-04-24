@@ -318,26 +318,25 @@ int8_t mcp2518fd_init_test(uint32_t spi_clk_rate)
 
 	mcp2518fd_configure_bit_time_40MHz(CAN_NBT_500K);
 
-	CAN_TX_FIFO_CONFIG ciFifocon1;
-	mcp2518fd_tx_fifo_configure_reset(&ciFifocon1);
-	ciFifocon1.FifoSize = 4;
-	ciFifocon1.PayLoadSize = 0b000;
-	ciFifocon1.TxPriority = 1;
-	mcp2518fd_tx_fifo_configure(CAN_FIFO_CH1, &ciFifocon1);
+	CAN_TX_FIFO_CONFIG tx_config;
+	mcp2518fd_tx_fifo_configure_reset(&tx_config);
+	tx_config.FifoSize = 4;
+	tx_config.PayLoadSize = 0b000;
+	tx_config.TxPriority = 1;
+	mcp2518fd_tx_fifo_configure(CAN_FIFO_CH1, &tx_config);
 
-	CAN_RX_FIFO_CONFIG ciFifocon2;
-	mcp2518fd_rx_fifo_configure_reset(&ciFifocon2);
-	ciFifocon2.FifoSize = 15;
-	ciFifocon2.PayLoadSize = 0b000;
-	ciFifocon2.RxTimeStampEnable = 0;
-	mcp2518fd_rx_fifo_configure(CAN_FIFO_CH2, &ciFifocon2);
+	CAN_RX_FIFO_CONFIG rx_config;
+	mcp2518fd_rx_fifo_configure_reset(&rx_config);
+	rx_config.FifoSize = 15;
+	rx_config.PayLoadSize = 0b000;
+	rx_config.RxTimeStampEnable = 0;
+	mcp2518fd_rx_fifo_configure(CAN_FIFO_CH2, &rx_config);
 
 	// Initialize RAM
 	mcp2518fd_ram_init(0x00);
 
 	// Select Normal Mode
 	mcp2518fd_opmode_select(CAN_NORMAL_MODE);
-	// mcp2518fd_opmode_select(CAN_NORMAL_MODE);
 
 	return 0;
 }
