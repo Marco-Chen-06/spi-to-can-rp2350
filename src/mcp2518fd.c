@@ -57,7 +57,10 @@ const uint16_t crc16_table[256] = {
     0x8213, 0x0216, 0x021C, 0x8219, 0x0208, 0x820D, 0x8207, 0x0202
 };
 
-static void mcp2518fd_spi_init(uint32_t spi_clk_rate) {
+// sets up spi on rp2350 to communicate with mcp2518fd
+// Initializes everything on spi_default
+// So that would be GP16 - GP19
+void mcp2518fd_spi_init(uint32_t spi_clk_rate) {
     // Initialize RP2350 SPI peripheral
     stdio_init_all();
 
@@ -306,7 +309,7 @@ int8_t mcp2518fd_configure(CAN_CONFIG* config) {
 
 int8_t mcp2518fd_configure_reset(CAN_CONFIG* config) {
     REG_CiCON ciCon;
-    
+
     ciCon.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiCON/4];
     ciCon.bF.DNetFilterCount = config->DNetFilterCount;
     ciCon.bF.IsoCrcEnable = config->IsoCrcEnable;

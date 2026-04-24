@@ -49,6 +49,18 @@ typedef struct _CAN_CONFIG {
     uint32_t TxBandWidthSharing : 4;
 } CAN_CONFIG;
 
+/* NEED THE FOLLOWING CONFIGS:*/
+/* 
+reg_osc
+iocon
+ciNbtcfg
+ciFifocon1
+ciFifocon2
+
+*/
+/* ------------ */
+
+
 //! CAN Message Object ID
 typedef struct CAN_MSGOBJ_ID {
     uint32_t SID : 11;
@@ -139,6 +151,7 @@ uint8_t mcp2518fd_write_word(uint16_t addr, uint32_t data);
   People using this driver for CAN should not touch these. 
 */
 int8_t mcp2518fd_init(uint32_t spi_clk_rate);
+void mcp2518fd_spi_init(uint32_t spi_clk_rate);
 void mcp2518fd_reset();
 void mcp2518fd_ram_init(uint8_t data);
 
