@@ -33,6 +33,10 @@ typedef enum {
 	CAN_RESTRICTED_MODE = 0b111
 } CAN_OPERATION_MODE;
 
+//! CAN Nominal Bit Time Setup
+
+typedef enum { CAN_NBT_125K, CAN_NBT_250K, CAN_NBT_500K, CAN_NBT_1M } CAN_NOMINAL_BITTIME_SETUP;
+
 //! CAN Configure
 typedef struct _CAN_CONFIG {
 	uint32_t DNetFilterCount : 5;
@@ -48,7 +52,6 @@ typedef struct _CAN_CONFIG {
 	uint32_t TXQEnable : 1;
 	uint32_t TxBandWidthSharing : 4;
 } CAN_CONFIG;
-
 // /*--- Oscillator Register (OSC) at 0xE00 -----------------------------------*/
 // typedef union {
 //     struct {
@@ -69,6 +72,47 @@ typedef struct _CAN_CONFIG {
 //     uint32_t word;
 //     uint8_t  byte[4];
 // } REG_OSC;
+
+//! Oscillator Conrol
+typedef struct _CAN_OSC_CTRL {
+	uint32_t PllEnable : 1; /* bit  0  - Enable PLL (×10 from XTAL)      */
+	uint32_t unimplemented1 : 1;
+	uint32_t OscDisable : 1; /* bit  2  - Disable oscillator              */
+	uint32_t LowPowerModeEnable : 1; /* bit  3  - Low power mode (MCP2518FD only) */
+	uint32_t SCLKDIV : 1; /* bit  4  - System clock divisor (1 or 2)   */
+	uint32_t CLKODIV : 2; /* bits 6:5 - Clock output divisor           */
+	uint32_t unimplemented2 : 1;
+	uint32_t PllReady : 1; /* bit  8  - PLL locked (read only)          */
+	uint32_t unimplemented3 : 1;
+	uint32_t OscReady : 1; /* bit 10  - Oscillator running (read only)  */
+	uint32_t unimplemented4 : 1;
+	uint32_t SclkReady : 1; /* bit 12  - System clock stable (read only) */
+	uint32_t unimplemented5 : 19;
+} CAN_OSC_CTRL;
+
+typedef struct _CAN_IOCON_CTRL {
+	uint32_t TRIS0 : 1; /* bit  0  - GPIO0 direction (0=out, 1=in)   */
+	uint32_t TRIS1 : 1; /* bit  1  - GPIO1 direction                 */
+	uint32_t unimplemented1 : 2;
+	uint32_t ClearAutoSleepOnMatch : 1; /* bit 4 - Clear auto-sleep on filter match */
+	uint32_t AutoSleepEnable : 1; /* bit  5  - Auto-sleep enable               */
+	uint32_t XcrSTBYEnable : 1; /* bit  6  - XSTBY pin control               */
+	uint32_t unimplemented2 : 1;
+	uint32_t LAT0 : 1; /* bit  8  - GPIO0 latch (output value)      */
+	uint32_t LAT1 : 1; /* bit  9  - GPIO1 latch                     */
+	uint32_t unimplemented3 : 5;
+	uint32_t HVDETSEL : 1; /* bit 15  - High voltage detect select      */
+	uint32_t GPIO0 : 1; /* bit 16  - GPIO0 input state (read only)   */
+	uint32_t GPIO1 : 1; /* bit 17  - GPIO1 input state               */
+	uint32_t unimplemented4 : 6;
+	uint32_t PinMode0 : 1; /* bit 24  - INT0/GPIO0 pin mode             */
+	uint32_t PinMode1 : 1; /* bit 25  - INT1/GPIO1 pin mode             */
+	uint32_t unimplemented5 : 2;
+	uint32_t TXCANOpenDrain : 1; /* bit 28  - TXCAN open drain mode           */
+	uint32_t SOFOutputEnable : 1; /* bit 29  - SOF signal output enable        */
+	uint32_t INTPinOpenDrain : 1; /* bit 30  - INT pins open drain mode        */
+	uint32_t unimplemented6 : 1;
+} CAN_IOCON_CTRL;
 
 /* NEED THE FOLLOWING CONFIGS:*/
 /* 
@@ -183,6 +227,7 @@ int8_t mcp2518fd_configure(CAN_CONFIG *config);
 int8_t mcp2518fd_configure_reset(CAN_CONFIG *config);
 
 void mcp2518fd_opmode_select(CAN_OPERATION_MODE opmode);
+int8_t mcp2518fd_configure_bit_time_40MHz(CAN_NOMINAL_BITTIME_SETUP bit_time);
 
 // TODO: Implement paraeters: CAN_FIFO_CHANNEL channel, CAN_RX_MSGOBJ* rxObj,
 // uint8_t *rxd, uint8_t nBytes

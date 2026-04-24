@@ -333,15 +333,16 @@ int8_t mcp2518fd_init_test(uint32_t spi_clk_rate)
 	ciCon.TXQEnable = 0;
 	mcp2518fd_configure(&ciCon);
 
-	// matthew nominal bit timing config
-	// I think this is 500Kbps, 80% sample point
-	REG_CiNBTCFG ciNbtcfg;
-	ciNbtcfg.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiNBTCFG / 4];
-	ciNbtcfg.bF.SJW = 15;
-	ciNbtcfg.bF.TSEG2 = 15;
-	ciNbtcfg.bF.TSEG1 = 62;
-	ciNbtcfg.bF.BRP = 0; // baudrate prescaler of 1
-	mcp2518fd_write_word(MCP2518FD_REG_CiNBTCFG, ciNbtcfg.word);
+	mcp2518fd_configure_bit_time_40MHz(CAN_NBT_500K);
+	// // matthew nominal bit timing config
+	// // I think this is 500Kbps, 80% sample point
+	// REG_CiNBTCFG ciNbtcfg;
+	// ciNbtcfg.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiNBTCFG / 4];
+	// ciNbtcfg.bF.SJW = 15;
+	// ciNbtcfg.bF.TSEG2 = 15;
+	// ciNbtcfg.bF.TSEG1 = 62;
+	// ciNbtcfg.bF.BRP = 0; // baudrate prescaler of 1
+	// mcp2518fd_write_word(MCP2518FD_REG_CiNBTCFG, ciNbtcfg.word);
 
 	// Fifo 1: transmit fifo; 5 messages, 8 byte max payload, high priority
 	REG_CiFIFOCON ciFifocon1;

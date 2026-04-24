@@ -65,18 +65,14 @@ void mcp2518fd_spi_init(uint32_t spi_clk_rate)
 	// Set SPI to (0,0) mode
 	spi_set_format(spi_default, MSG_SIZE, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
 
-	gpio_set_function(PICO_DEFAULT_SPI_RX_PIN,
-			  GPIO_FUNC_SPI); // SPI0RX GP16
-	gpio_set_function(PICO_DEFAULT_SPI_TX_PIN,
-			  GPIO_FUNC_SPI); // SPI0TX GP19
-	gpio_set_function(PICO_DEFAULT_SPI_SCK_PIN,
-			  GPIO_FUNC_SPI); // SPI0SCK GP18
+	gpio_set_function(PICO_DEFAULT_SPI_RX_PIN, GPIO_FUNC_SPI); // SPI0RX GP16
+	gpio_set_function(PICO_DEFAULT_SPI_TX_PIN, GPIO_FUNC_SPI); // SPI0TX GP19
+	gpio_set_function(PICO_DEFAULT_SPI_SCK_PIN, GPIO_FUNC_SPI); // SPI0SCK GP18
 
 	// gpio_pull_up(PICO_DEFAULT_SPI_RX_PIN);
 	// gpio_pull_up(PICO_DEFAULT_SPI_TX_PIN);
 
-	gpio_set_function(PICO_DEFAULT_SPI_CSN_PIN,
-			  GPIO_FUNC_SIO); // SPICSN GP17
+	gpio_set_function(PICO_DEFAULT_SPI_CSN_PIN, GPIO_FUNC_SIO); // SPICSN GP17
 	gpio_set_dir(PICO_DEFAULT_SPI_CSN_PIN, GPIO_OUT);
 	gpio_put(PICO_DEFAULT_SPI_CSN_PIN, HIGH);
 }
@@ -336,3 +332,52 @@ int8_t mcp2518fd_configure_reset(CAN_CONFIG *config)
 
 	return 0;
 }
+
+int8_t mcp2518fd_configure_bit_time_40MHz(CAN_NOMINAL_BITTIME_SETUP bit_time)
+{
+	REG_CiNBTCFG ciNbtcfg;
+	ciNbtcfg.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiNBTCFG / 4];
+
+	// set different ciNbtcfg values for different bit times for 40Mhz SYSCLK
+	switch (bit_time) {
+	case CAN_NBT_125K:
+		ciNbtcfg.bF.BRP = 0;
+		ciNbtcfg.bF.TSEG1 = 254;
+		ciNbtcfg.bF.TSEG2 = 63;
+		ciNbtcfg.bF.SJW = 63;
+		break;
+	case CAN_NBT_250K:
+		ciNbtcfg.bF.BRP = 0;
+		ciNbtcfg.bF.TSEG1 = 126;
+		ciNbtcfg.bF.TSEG2 = 31;
+		ciNbtcfg.bF.SJW = 31;
+		break;
+	case CAN_NBT_500K:
+		ciNbtcfg.bF.BRP = 0;
+		ciNbtcfg.bF.TSEG1 = 62;
+		ciNbtcfg.bF.TSEG2 = 15;
+		ciNbtcfg.bF.SJW = 15;
+		break;
+	case CAN_NBT_1M:
+		ciNbtcfg.bF.BRP = 0;
+		ciNbtcfg.bF.TSEG1 = 254;
+		ciNbtcfg.bF.TSEG2 = 63;
+		ciNbtcfg.bF.SJW = 63;
+		break;
+	default:
+		return -1;
+		break;
+	}
+
+	mcp2518fd_write_word(MCP2518FD_REG_CiNBTCFG, ciNbtcfg.word);
+	return 0;
+}
+// CAN_NBT_125K, CAN_NBT_250K, CAN_NBT_500K, CAN_NBT_1M }
+
+// REG_CiNBTCFG ciNbtcfg;
+// 	ciNbtcfg.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiNBTCFG / 4];
+// 	ciNbtcfg.bF.SJW = 15;
+// 	ciNbtcfg.bF.TSEG2 = 15;
+// 	ciNbtcfg.bF.TSEG1 = 62;
+// 	ciNbtcfg.bF.BRP = 0; // baudrate prescaler of 1
+// 	mcp2518fd_write_word(MCP2518FD_REG_CiNBTCFG, ciNbtcfg.word);
