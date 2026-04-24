@@ -336,14 +336,23 @@ int8_t mcp2518fd_init_test(uint32_t spi_clk_rate) {
     REG_IOCON iocon;
     iocon.word = mcp2518fd_specific_reset_vals[1];
     mcp2518fd_write_byte(MCP2518FD_REG_IOCON, *iocon.byte); 
-
+    
     // CAN configuration, disable crc, disable TXQ, disable TEF
-    REG_CiCON ciCon;
-    ciCon.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiCON / 4];
-    ciCon.bF.IsoCrcEnable = 0; 
-    ciCon.bF.StoreInTEF = 0; 
-    ciCon.bF.TXQEnable = 0;
-    mcp2518fd_write_word(MCP2518FD_REG_CiCON, ciCon.word);
+    CAN_CONFIG ciCon;
+    mcp2518fd_configure_reset(&ciCon);
+    ciCon.IsoCrcEnable = 0;
+    ciCon.StoreInTEF = 0;
+    ciCon.TXQEnable = 0;
+    mcp2518fd_configure(&ciCon);
+
+
+
+    // REG_CiCON ciCon;
+    // ciCon.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiCON / 4];
+    // ciCon.bF.IsoCrcEnable = 0; 
+    // ciCon.bF.StoreInTEF = 0; 
+    // ciCon.bF.TXQEnable = 0;
+    // mcp2518fd_write_word(MCP2518FD_REG_CiCON, ciCon.word);
 
     // matthew nominal bit timing config 
     // I think this is 500Kbps, 80% sample point

@@ -306,8 +306,7 @@ int8_t mcp2518fd_configure(CAN_CONFIG* config) {
 
 int8_t mcp2518fd_configure_reset(CAN_CONFIG* config) {
     REG_CiCON ciCon;
-    ciCon.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiCON/4];
-
+    
     ciCon.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiCON/4];
     ciCon.bF.DNetFilterCount = config->DNetFilterCount;
     ciCon.bF.IsoCrcEnable = config->IsoCrcEnable;
