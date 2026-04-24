@@ -379,6 +379,55 @@ int8_t mcp2518fd_osc_configure_reset(CAN_OSC_CTRL *config)
 	return 0;
 }
 
+int8_t mcp2518fd_io_configure(CAN_IO_CTRL *config)
+{
+	REG_IOCON iocon;
+
+	iocon.word = mcp2518fd_specific_reset_vals[1];
+	iocon.bF.TRIS0 = config->TRIS0;
+	iocon.bF.TRIS1 = config->TRIS1;
+	iocon.bF.ClearAutoSleepOnMatch = config->ClearAutoSleepOnMatch;
+	iocon.bF.AutoSleepEnable = config->AutoSleepEnable;
+	iocon.bF.XcrSTBYEnable = config->XcrSTBYEnable;
+	iocon.bF.LAT0 = config->LAT0;
+	iocon.bF.LAT1 = config->LAT1;
+	iocon.bF.HVDETSEL = config->HVDETSEL;
+	iocon.bF.GPIO0 = config->GPIO0;
+	iocon.bF.GPIO1 = config->GPIO1;
+	iocon.bF.PinMode0 = config->PinMode0;
+	iocon.bF.PinMode1 = config->PinMode1;
+	iocon.bF.TXCANOpenDrain = config->TXCANOpenDrain;
+	iocon.bF.SOFOutputEnable = config->SOFOutputEnable;
+	iocon.bF.INTPinOpenDrain = config->INTPinOpenDrain;
+
+	// bitfields in IOCON register must be written using single data byte SFR WRITE instructions
+	for (int i = 0; i < 4; i++) {
+		mcp2518fd_write_byte(MCP2518FD_REG_IOCON + i, iocon.byte[i]);
+	}
+}
+
+int8_t mcp2518fd_io_configure_reset(CAN_IO_CTRL *config)
+{
+	REG_IOCON iocon;
+
+	iocon.word = mcp2518fd_specific_reset_vals[1];
+	config->TRIS0 = iocon.bF.TRIS0;
+	config->TRIS1 = iocon.bF.TRIS1;
+	config->ClearAutoSleepOnMatch = iocon.bF.ClearAutoSleepOnMatch;
+	config->AutoSleepEnable = iocon.bF.AutoSleepEnable;
+	config->XcrSTBYEnable = iocon.bF.XcrSTBYEnable;
+	config->LAT0 = iocon.bF.LAT0;
+	config->LAT1 = iocon.bF.LAT1;
+	config->HVDETSEL = iocon.bF.HVDETSEL;
+	config->GPIO0 = iocon.bF.GPIO0;
+	config->GPIO1 = iocon.bF.GPIO1;
+	config->PinMode0 = iocon.bF.PinMode0;
+	config->PinMode1 = iocon.bF.PinMode1;
+	config->TXCANOpenDrain = iocon.bF.TXCANOpenDrain;
+	config->SOFOutputEnable = iocon.bF.SOFOutputEnable;
+	config->INTPinOpenDrain = iocon.bF.INTPinOpenDrain;
+}
+
 int8_t mcp2518fd_configure_bit_time_40MHz(CAN_NOMINAL_BITTIME_SETUP bit_time)
 {
 	REG_CiNBTCFG ciNbtcfg;

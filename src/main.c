@@ -310,27 +310,10 @@ int8_t mcp2518fd_init_test(uint32_t spi_clk_rate)
 	osc.PllEnable = 0b0;
 	mcp2518fd_osc_configure(&osc);
 
-	// REG_OSC osc;
-	// osc.word = mcp2518fd_specific_reset_vals[0];
-	// osc.bF.CLKODIV = 0b00;
-	// osc.bF.SCLKDIV = 0b0;
-	// osc.bF.PllEnable = 0b0;
-	// mcp2518fd_write_word(MCP2518FD_REG_OSC, osc.word);
-
-	// // check for osc_ready bit to be set (no timeout because I haven't implemented timers)
-	// uint8_t osc_data = 0;
-	// while (1) {
-	// 	mcp2518fd_read_byte(MCP2518FD_REG_OSC + 1, &osc_data);
-	// 	if (osc_data & 0x04) {
-	// 		break;
-	// 	}
-	// }
-
-	// I/O configuration, GPIO0 and GPIO1 to be both inputs
-	// also, bit fields in the IOCON register must be written using single data byte SFR WRITE instructions
-	REG_IOCON iocon;
-	iocon.word = mcp2518fd_specific_reset_vals[1];
-	mcp2518fd_write_byte(MCP2518FD_REG_IOCON, *iocon.byte);
+	// I/O configuration, GPIO0 and GPIO1 to be both inputs (by using default config)
+	CAN_IO_CTRL iocon;
+	mcp2518fd_io_configure_reset(&iocon);
+	mcp2518fd_io_configure(&iocon);
 
 	// CAN configuration, disable crc, disable TXQ, disable TEF
 	CAN_CONFIG ciCon;

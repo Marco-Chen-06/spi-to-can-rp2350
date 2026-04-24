@@ -90,7 +90,7 @@ typedef struct _CAN_OSC_CTRL {
 	uint32_t unimplemented5 : 19;
 } CAN_OSC_CTRL;
 
-typedef struct _CAN_IOCON_CTRL {
+typedef struct _CAN_IO_CTRL {
 	uint32_t TRIS0 : 1; /* bit  0  - GPIO0 direction (0=out, 1=in)   */
 	uint32_t TRIS1 : 1; /* bit  1  - GPIO1 direction                 */
 	uint32_t unimplemented1 : 2;
@@ -112,7 +112,7 @@ typedef struct _CAN_IOCON_CTRL {
 	uint32_t SOFOutputEnable : 1; /* bit 29  - SOF signal output enable        */
 	uint32_t INTPinOpenDrain : 1; /* bit 30  - INT pins open drain mode        */
 	uint32_t unimplemented6 : 1;
-} CAN_IOCON_CTRL;
+} CAN_IO_CTRL;
 
 /* NEED THE FOLLOWING CONFIGS:*/
 /* 
@@ -227,6 +227,8 @@ int8_t mcp2518fd_configure(CAN_CONFIG *config);
 int8_t mcp2518fd_configure_reset(CAN_CONFIG *config);
 int8_t mcp2518fd_osc_configure(CAN_OSC_CTRL *config);
 int8_t mcp2518fd_osc_configure_reset(CAN_OSC_CTRL *config);
+int8_t mcp2518fd_io_configure(CAN_IO_CTRL *config);
+int8_t mcp2518fd_io_configure_reset(CAN_IO_CTRL *config);
 
 void mcp2518fd_opmode_select(CAN_OPERATION_MODE opmode);
 int8_t mcp2518fd_configure_bit_time_40MHz(CAN_NOMINAL_BITTIME_SETUP bit_time);
