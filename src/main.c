@@ -20,10 +20,10 @@ void blink_builtin(int delay_ms);
 // int8_t test_tx();
 // int8_t test_read_write();
 int8_t mcp2518fd_tx_fifo_test();
-int8_t mcp2518fd_rx_init_test();
-int8_t mcp2518fd_rx_init();
-int8_t mcp2518fd_rx_fifo_test(uint8_t *data);
+// int8_t mcp2518fd_rx_init_test();
+// int8_t mcp2518fd_rx_fifo_test(uint8_t *data);
 int8_t mcp2518fd_init(uint32_t spi_clk_rate);
+int8_t mcp2518fd_rx_init();
 
 int main()
 {
@@ -36,8 +36,13 @@ int main()
 
 	printf("\n-----STARTING TEST-----\n");
 	uint8_t databuf[8];
+	CAN_RX_MSGOBJ rxObj;
+	int error = 0;
 	for (;;) {
-		mcp2518fd_rx_fifo_test(databuf);
+		// receive a message, and retry if there is an error
+		while ((mcp2518fd_receive_message(CAN_FIFO_CH2, &rxObj, databuf))) {
+			tight_loop_contents();
+		}
 		printf("Out (Decimal): ");
 		for (int i = 0; i < 8; i++) {
 			printf("%d ", databuf[i]);
@@ -193,29 +198,6 @@ int8_t mcp2518fd_tx_fifo_test()
 	return 0;
 }
 
-int8_t mcp2518fd_rx_init()
-{
-	// configure filter object 0
-	CAN_FILTEROBJ_ID fObj;
-	fObj.SID = 0x200;
-	fObj.SID11 = 0;
-	fObj.EID = 0;
-	fObj.EXIDE = 0;
-	mcp2518fd_filter_configure(CAN_FILTER0, &fObj);
-
-	// configure message object 0
-	CAN_MASKOBJ_ID mObj;
-	mObj.MSID = 0x7F0; // make mask 4 bits wide from the LSB
-	mObj.MSID11 = 0;
-	mObj.MEID = 0;
-	mObj.MIDE = 1; // match EXIDE bit
-	mcp2518fd_filter_mask_configure(CAN_FILTER0, &mObj);
-
-	mcp2518fd_filter_assign(CAN_FILTER0, CAN_FIFO_CH2);
-
-	mcp2518fd_filter_enable(CAN_FILTER0);
-}
-
 // this function is expected to only be called before mcp2518fd_rx_fifo_test
 // this function sets up filter object 0 and mask object 0 with hardcoded values
 // It captures frames with SID from 0x200 - 0x20F and points the filter to FIFO2
@@ -363,4 +345,27 @@ int8_t mcp2518fd_init(uint32_t spi_clk_rate)
 	mcp2518fd_opmode_select(CAN_NORMAL_MODE);
 
 	return 0;
+}
+
+int8_t mcp2518fd_rx_init()
+{
+	// configure filter object 0
+	CAN_FILTEROBJ_ID fObj;
+	fObj.SID = 0x200;
+	fObj.SID11 = 0;
+	fObj.EID = 0;
+	fObj.EXIDE = 0;
+	mcp2518fd_filter_configure(CAN_FILTER0, &fObj);
+
+	// configure message object 0
+	CAN_MASKOBJ_ID mObj;
+	mObj.MSID = 0x7F0; // make mask 4 bits wide from the LSB
+	mObj.MSID11 = 0;
+	mObj.MEID = 0;
+	mObj.MIDE = 1; // match EXIDE bit
+	mcp2518fd_filter_mask_configure(CAN_FILTER0, &mObj);
+
+	mcp2518fd_filter_assign(CAN_FILTER0, CAN_FIFO_CH2);
+
+	mcp2518fd_filter_enable(CAN_FILTER0);
 }

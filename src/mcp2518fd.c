@@ -631,8 +631,8 @@ int8_t mcp2518fd_receive_message(CAN_FIFO_CHANNEL channel, CAN_RX_MSGOBJ *rxObj,
 	}
 
 	// store rxObj for the caller
-	rxObj->word[0] = rx_obj_data[1];
-	rxObj->word[1] = rx_obj_data[2];
+	rxObj->word[0] = rx_obj_data[0];
+	rxObj->word[1] = rx_obj_data[1];
 
 	// store rx data for the caller
 	rxd[0] = (rx_obj_data[2] >> 0) & 0xFF;
