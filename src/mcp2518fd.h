@@ -4,6 +4,12 @@
 
   In addition, add a function that lets you write SPI in arrays because thats
   more efficient then writing 1 word at at time in some cases.
+
+  Also, add support for timestamps, and transmit event fifo and transmit queue
+
+  Another thing is that this driver is fully for CAN 2.0, and CANFD is not supported.
+
+  There is also a ton of status gets and error handling that must be implemented too
 */
 
 /*
@@ -63,6 +69,43 @@ typedef enum {
 // FIFO0 is a special FIFO, the TX Queue
 #define CAN_TXQUEUE_CH0 CAN_FIFO_CH0
 
+//! CAN Filter Channels
+typedef enum {
+	CAN_FILTER0,
+	CAN_FILTER1,
+	CAN_FILTER2,
+	CAN_FILTER3,
+	CAN_FILTER4,
+	CAN_FILTER5,
+	CAN_FILTER6,
+	CAN_FILTER7,
+	CAN_FILTER8,
+	CAN_FILTER9,
+	CAN_FILTER10,
+	CAN_FILTER11,
+	CAN_FILTER12,
+	CAN_FILTER13,
+	CAN_FILTER14,
+	CAN_FILTER15,
+	CAN_FILTER16,
+	CAN_FILTER17,
+	CAN_FILTER18,
+	CAN_FILTER19,
+	CAN_FILTER20,
+	CAN_FILTER21,
+	CAN_FILTER22,
+	CAN_FILTER23,
+	CAN_FILTER24,
+	CAN_FILTER25,
+	CAN_FILTER26,
+	CAN_FILTER27,
+	CAN_FILTER28,
+	CAN_FILTER29,
+	CAN_FILTER30,
+	CAN_FILTER31,
+	CAN_FILTER_TOTAL,
+} CAN_FILTER;
+
 typedef enum {
 	CAN_NORMAL_MODE = 0b000,
 	CAN_SLEEP_MODE = 0b001,
@@ -97,43 +140,29 @@ typedef struct _CAN_CONFIG {
 //! Oscillator Conrol
 typedef struct _CAN_OSC_CTRL {
 	uint32_t PllEnable : 1; /* bit  0  - Enable PLL (×10 from XTAL)      */
-	uint32_t unimplemented1 : 1;
 	uint32_t OscDisable : 1; /* bit  2  - Disable oscillator              */
 	uint32_t LowPowerModeEnable : 1; /* bit  3  - Low power mode (MCP2518FD only) */
 	uint32_t SCLKDIV : 1; /* bit  4  - System clock divisor (1 or 2)   */
 	uint32_t CLKODIV : 2; /* bits 6:5 - Clock output divisor           */
-	uint32_t unimplemented2 : 1;
-	uint32_t PllReady : 1; /* bit  8  - PLL locked (read only)          */
-	uint32_t unimplemented3 : 1;
-	uint32_t OscReady : 1; /* bit 10  - Oscillator running (read only)  */
-	uint32_t unimplemented4 : 1;
-	uint32_t SclkReady : 1; /* bit 12  - System clock stable (read only) */
-	uint32_t unimplemented5 : 19;
 } CAN_OSC_CTRL;
 
 // input-output control based on IOCON
 typedef struct _CAN_IO_CTRL {
 	uint32_t TRIS0 : 1; /* bit  0  - GPIO0 direction (0=out, 1=in)   */
 	uint32_t TRIS1 : 1; /* bit  1  - GPIO1 direction                 */
-	uint32_t unimplemented1 : 2;
 	uint32_t ClearAutoSleepOnMatch : 1; /* bit 4 - Clear auto-sleep on filter match */
 	uint32_t AutoSleepEnable : 1; /* bit  5  - Auto-sleep enable               */
 	uint32_t XcrSTBYEnable : 1; /* bit  6  - XSTBY pin control               */
-	uint32_t unimplemented2 : 1;
 	uint32_t LAT0 : 1; /* bit  8  - GPIO0 latch (output value)      */
 	uint32_t LAT1 : 1; /* bit  9  - GPIO1 latch                     */
-	uint32_t unimplemented3 : 5;
 	uint32_t HVDETSEL : 1; /* bit 15  - High voltage detect select      */
 	uint32_t GPIO0 : 1; /* bit 16  - GPIO0 input state (read only)   */
 	uint32_t GPIO1 : 1; /* bit 17  - GPIO1 input state               */
-	uint32_t unimplemented4 : 6;
 	uint32_t PinMode0 : 1; /* bit 24  - INT0/GPIO0 pin mode             */
 	uint32_t PinMode1 : 1; /* bit 25  - INT1/GPIO1 pin mode             */
-	uint32_t unimplemented5 : 2;
 	uint32_t TXCANOpenDrain : 1; /* bit 28  - TXCAN open drain mode           */
 	uint32_t SOFOutputEnable : 1; /* bit 29  - SOF signal output enable        */
 	uint32_t INTPinOpenDrain : 1; /* bit 30  - INT pins open drain mode        */
-	uint32_t unimplemented6 : 1;
 } CAN_IO_CTRL;
 
 //! CAN Transmit Channel Configure
@@ -247,7 +276,6 @@ uint8_t mcp2518fd_write_word(uint16_t addr, uint32_t data);
   Initialize and configure the mcp2518fd hardware registers.
   People using this driver for CAN should not touch these. 
 */
-int8_t mcp2518fd_init(uint32_t spi_clk_rate);
 void mcp2518fd_spi_init(uint32_t spi_clk_rate);
 void mcp2518fd_reset();
 void mcp2518fd_ram_init(uint8_t data);
@@ -264,17 +292,36 @@ int8_t mcp2518fd_osc_configure(CAN_OSC_CTRL *config);
 int8_t mcp2518fd_osc_configure_reset(CAN_OSC_CTRL *config);
 int8_t mcp2518fd_io_configure(CAN_IO_CTRL *config);
 int8_t mcp2518fd_io_configure_reset(CAN_IO_CTRL *config);
-
 int8_t mcp2518fd_tx_fifo_configure(CAN_FIFO_CHANNEL channel, CAN_TX_FIFO_CONFIG *config);
 int8_t mcp2518fd_tx_fifo_configure_reset(CAN_TX_FIFO_CONFIG *config);
 int8_t mcp2518fd_rx_fifo_configure(CAN_FIFO_CHANNEL channel, CAN_RX_FIFO_CONFIG *config);
 int8_t mcp2518fd_rx_fifo_configure_reset(CAN_RX_FIFO_CONFIG *config);
 
+int8_t mcp2518fd_filter_configure(CAN_FILTER filter, CAN_FILTEROBJ_ID *config);
+int8_t mcp2518fd_filter_mask_configure(CAN_FILTER filter, CAN_MASKOBJ_ID *config);
+int8_t mcp2518fd_filter_assign(CAN_FILTER filter, CAN_FIFO_CHANNEL channel);
+int8_t mcp2518fd_filter_enable(CAN_FILTER filter);
+/*
+    Need to add (rx):
+    filter object config
+    mask object config
+    receive message
+
+    (not sure if below are needed)
+    rx object config
+    rx object reset
+*/
+
+/*
+    Need to add (tx):
+    tx object config
+    tx object reset
+
+*/
+
 void mcp2518fd_opmode_select(CAN_OPERATION_MODE opmode);
 int8_t mcp2518fd_configure_bit_time_40MHz(CAN_NOMINAL_BITTIME_SETUP bit_time);
 
-// TODO: Implement paraeters: CAN_FIFO_CHANNEL channel, CAN_RX_MSGOBJ* rxObj,
-// uint8_t *rxd, uint8_t nBytes
-int8_t mcp2518fd_receive_message();
+int8_t mcp2518fd_receive_message(CAN_FIFO_CHANNEL channel, CAN_RX_MSGOBJ *rxObj, uint8_t *rxd);
 
 #endif

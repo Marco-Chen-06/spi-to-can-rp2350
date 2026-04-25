@@ -77,90 +77,90 @@ void mcp2518fd_spi_init(uint32_t spi_clk_rate)
 	gpio_put(PICO_DEFAULT_SPI_CSN_PIN, HIGH);
 }
 
-// initialize mcp2518fd with hardcoded settings. Namely, 500kbps with no crc.
-int8_t mcp2518fd_init(uint32_t spi_clk_rate)
-{
-	/*
-      I won't be doing error checking for the writes and reads because the internal
-      spi_write_read_blocking function never returns anything other than the number
-      of bytes transmitted/received. If ou want to see this, look inside pico SDK's 
-      spi_write_read_blocking function and it only returns "len", no matter what. 
-    */
-	mcp2518fd_spi_init(spi_clk_rate);
+// // initialize mcp2518fd with hardcoded settings. Namely, 500kbps with no crc.
+// int8_t mcp2518fd_init(uint32_t spi_clk_rate)
+// {
+// 	/*
+//       I won't be doing error checking for the writes and reads because the internal
+//       spi_write_read_blocking function never returns anything other than the number
+//       of bytes transmitted/received. If ou want to see this, look inside pico SDK's
+//       spi_write_read_blocking function and it only returns "len", no matter what.
+//     */
+// 	mcp2518fd_spi_init(spi_clk_rate);
 
-	mcp2518fd_reset();
+// 	mcp2518fd_reset();
 
-	// oscillator configuration, CLKO divisor 1, SCLK divisor 1, PLL disabled
-	// SOLDERED CAN breakout board has 40 MHz internal oscillator, so no divisors or PLL needed
-	REG_OSC osc;
-	osc.word = mcp2518fd_specific_reset_vals[0];
-	osc.bF.CLKODIV = 0b00;
-	osc.bF.SCLKDIV = 0b0;
-	osc.bF.PllEnable = 0b0;
-	mcp2518fd_write_word(MCP2518FD_REG_OSC, osc.word);
+// 	// oscillator configuration, CLKO divisor 1, SCLK divisor 1, PLL disabled
+// 	// SOLDERED CAN breakout board has 40 MHz internal oscillator, so no divisors or PLL needed
+// 	REG_OSC osc;
+// 	osc.word = mcp2518fd_specific_reset_vals[0];
+// 	osc.bF.CLKODIV = 0b00;
+// 	osc.bF.SCLKDIV = 0b0;
+// 	osc.bF.PllEnable = 0b0;
+// 	mcp2518fd_write_word(MCP2518FD_REG_OSC, osc.word);
 
-	// check for osc_ready bit to be set (no timeout because I haven't implemented timers)
-	uint8_t osc_data = 0;
-	while (1) {
-		mcp2518fd_read_byte(MCP2518FD_REG_OSC + 1, &osc_data);
-		if (osc_data & 0x04) {
-			break;
-		}
-	}
+// 	// check for osc_ready bit to be set (no timeout because I haven't implemented timers)
+// 	uint8_t osc_data = 0;
+// 	while (1) {
+// 		mcp2518fd_read_byte(MCP2518FD_REG_OSC + 1, &osc_data);
+// 		if (osc_data & 0x04) {
+// 			break;
+// 		}
+// 	}
 
-	// I/O configuration, GPIO0 and GPIO1 to be both inputs
-	// also, bit fields in the IOCON register must be written using single data byte SFR WRITE instructions
-	REG_IOCON iocon;
-	iocon.word = mcp2518fd_specific_reset_vals[1];
-	mcp2518fd_write_byte(MCP2518FD_REG_IOCON, *iocon.byte);
+// 	// I/O configuration, GPIO0 and GPIO1 to be both inputs
+// 	// also, bit fields in the IOCON register must be written using single data byte SFR WRITE instructions
+// 	REG_IOCON iocon;
+// 	iocon.word = mcp2518fd_specific_reset_vals[1];
+// 	mcp2518fd_write_byte(MCP2518FD_REG_IOCON, *iocon.byte);
 
-	// CAN configuration, disable crc, disable TXQ, disable TEF
-	REG_CiCON ciCon;
-	ciCon.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiCON / 4];
-	ciCon.bF.IsoCrcEnable = 0;
-	ciCon.bF.StoreInTEF = 0;
-	ciCon.bF.TXQEnable = 0;
-	mcp2518fd_write_word(MCP2518FD_REG_CiCON, ciCon.word);
+// 	// CAN configuration, disable crc, disable TXQ, disable TEF
+// 	REG_CiCON ciCon;
+// 	ciCon.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiCON / 4];
+// 	ciCon.bF.IsoCrcEnable = 0;
+// 	ciCon.bF.StoreInTEF = 0;
+// 	ciCon.bF.TXQEnable = 0;
+// 	mcp2518fd_write_word(MCP2518FD_REG_CiCON, ciCon.word);
 
-	// matthew nominal bit timing config
-	// I think this is 500Kbps, 80% sample point
-	REG_CiNBTCFG ciNbtcfg;
-	ciNbtcfg.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiNBTCFG / 4];
-	ciNbtcfg.bF.SJW = 15;
-	ciNbtcfg.bF.TSEG2 = 15;
-	ciNbtcfg.bF.TSEG1 = 62;
-	ciNbtcfg.bF.BRP = 0; // baudrate prescaler of 1
-	mcp2518fd_write_word(MCP2518FD_REG_CiNBTCFG, ciNbtcfg.word);
+// 	// matthew nominal bit timing config
+// 	// I think this is 500Kbps, 80% sample point
+// 	REG_CiNBTCFG ciNbtcfg;
+// 	ciNbtcfg.word = mcp2518fd_ctrl_reset_vals[MCP2518FD_REG_CiNBTCFG / 4];
+// 	ciNbtcfg.bF.SJW = 15;
+// 	ciNbtcfg.bF.TSEG2 = 15;
+// 	ciNbtcfg.bF.TSEG1 = 62;
+// 	ciNbtcfg.bF.BRP = 0; // baudrate prescaler of 1
+// 	mcp2518fd_write_word(MCP2518FD_REG_CiNBTCFG, ciNbtcfg.word);
 
-	// Fifo 1: transmit fifo; 5 messages, 8 byte max payload, high priority
-	REG_CiFIFOCON ciFifocon1;
-	ciFifocon1.word = mcp2518fd_fifo_reset_vals[0];
-	ciFifocon1.txBF.TxEnable = 1;
-	ciFifocon1.txBF.FifoSize = 4;
-	ciFifocon1.txBF.PayLoadSize = 0b000;
-	ciFifocon1.txBF.TxPriority = 1;
-	mcp2518fd_write_word(MCP2518FD_REG_CiFIFOCON + (1 * MCP2518FD_FIFO_REG_STRIDE),
-			     ciFifocon1.word);
+// 	// Fifo 1: transmit fifo; 5 messages, 8 byte max payload, high priority
+// 	REG_CiFIFOCON ciFifocon1;
+// 	ciFifocon1.word = mcp2518fd_fifo_reset_vals[0];
+// 	ciFifocon1.txBF.TxEnable = 1;
+// 	ciFifocon1.txBF.FifoSize = 4;
+// 	ciFifocon1.txBF.PayLoadSize = 0b000;
+// 	ciFifocon1.txBF.TxPriority = 1;
+// 	mcp2518fd_write_word(MCP2518FD_REG_CiFIFOCON + (1 * MCP2518FD_FIFO_REG_STRIDE),
+// 			     ciFifocon1.word);
 
-	// Fifo 2: receive fifo; 16 messages, 8 byte max payload, time stamping disabled
-	REG_CiFIFOCON ciFifocon2;
-	ciFifocon2.word = mcp2518fd_fifo_reset_vals[0];
-	ciFifocon2.rxBF.TxEnable = 0;
-	ciFifocon2.rxBF.FifoSize = 15;
-	ciFifocon2.rxBF.PayLoadSize = 0b000;
-	ciFifocon2.rxBF.RxTimeStampEnable = 0;
-	mcp2518fd_write_word(MCP2518FD_REG_CiFIFOCON + (2 * MCP2518FD_FIFO_REG_STRIDE),
-			     ciFifocon2.word);
+// 	// Fifo 2: receive fifo; 16 messages, 8 byte max payload, time stamping disabled
+// 	REG_CiFIFOCON ciFifocon2;
+// 	ciFifocon2.word = mcp2518fd_fifo_reset_vals[0];
+// 	ciFifocon2.rxBF.TxEnable = 0;
+// 	ciFifocon2.rxBF.FifoSize = 15;
+// 	ciFifocon2.rxBF.PayLoadSize = 0b000;
+// 	ciFifocon2.rxBF.RxTimeStampEnable = 0;
+// 	mcp2518fd_write_word(MCP2518FD_REG_CiFIFOCON + (2 * MCP2518FD_FIFO_REG_STRIDE),
+// 			     ciFifocon2.word);
 
-	// Initialize RAM
-	mcp2518fd_ram_init(0x00);
+// 	// Initialize RAM
+// 	mcp2518fd_ram_init(0x00);
 
-	// Select Normal Mode
-	mcp2518fd_opmode_select(CAN_NORMAL_MODE);
-	// mcp2518fd_opmode_select(CAN_NORMAL_MODE);
+// 	// Select Normal Mode
+// 	mcp2518fd_opmode_select(CAN_NORMAL_MODE);
+// 	// mcp2518fd_opmode_select(CAN_NORMAL_MODE);
 
-	return 0;
-}
+// 	return 0;
+// }
 
 /*
   Perform mcp2518fd RESET instruction
@@ -267,25 +267,6 @@ void mcp2518fd_ram_init(uint8_t data)
 {
 	for (uint32_t addr = MCP2518FD_RAM_START; addr < MCP2518FD_RAM_END; addr++) {
 		mcp2518fd_write_byte(addr, data);
-	}
-}
-
-void mcp2518fd_opmode_select(CAN_OPERATION_MODE opmode)
-{
-	uint8_t ciCon_data = 0;
-	mcp2518fd_read_byte(MCP2518FD_REG_CiCON + 3, &ciCon_data);
-	ciCon_data &= ~0x07;
-	ciCon_data |= opmode;
-	mcp2518fd_write_byte(MCP2518FD_REG_CiCON + 3, ciCon_data);
-
-	// wait for opmod to match the requested operation mode before continuing
-	ciCon_data = 0;
-
-	while (1) {
-		mcp2518fd_read_byte(MCP2518FD_REG_CiCON + 2, &ciCon_data);
-		if ((ciCon_data >> 5 & 0x07) == opmode) {
-			break;
-		}
 	}
 }
 
@@ -495,6 +476,93 @@ int8_t mcp2518fd_rx_fifo_configure_reset(CAN_RX_FIFO_CONFIG *config)
 	return 0;
 }
 
+int8_t mcp2518fd_filter_configure(CAN_FILTER filter, CAN_FILTEROBJ_ID *config)
+{
+	// clear FLTEN bit before changing filter or mask object
+	REG_CiFLTCON_BYTE ciFltcon;
+	uint16_t addr = MCP2518FD_REG_CiFLTCON + filter;
+	mcp2518fd_read_byte(addr, &ciFltcon.byte);
+	ciFltcon.bF.Enable = 0; // disable filter
+	mcp2518fd_write_byte(addr, ciFltcon.byte);
+
+	REG_CiFLTOBJ fObj;
+
+	fObj.word = 0;
+	fObj.bF.SID = config->SID;
+	fObj.bF.SID11 = config->SID11;
+	fObj.bF.EID = config->EID;
+	fObj.bF.EXIDE = config->EXIDE;
+
+	addr = MCP2518FD_REG_CiFLTOBJ + (filter * MCP2518FD_FILTER_REG_STRIDE);
+	mcp2518fd_write_word(addr, fObj.word);
+	return 0;
+}
+
+int8_t mcp2518fd_filter_mask_configure(CAN_FILTER filter, CAN_MASKOBJ_ID *config)
+{
+	// clear FLTEN bit before changing filter or mask object
+	REG_CiFLTCON_BYTE ciFltcon;
+	uint16_t addr = MCP2518FD_REG_CiFLTCON + filter;
+	mcp2518fd_read_byte(addr, &ciFltcon.byte);
+	ciFltcon.bF.Enable = 0; // disable filter
+	mcp2518fd_write_byte(addr, ciFltcon.byte);
+
+	REG_CiMASK mObj;
+
+	mObj.word = 0;
+	mObj.bF.MSID = config->MSID;
+	mObj.bF.MSID11 = config->MSID11;
+	mObj.bF.MEID = config->MEID;
+	mObj.bF.MIDE = config->MIDE;
+
+	addr = MCP2518FD_REG_CiMASK + (filter * MCP2518FD_FILTER_REG_STRIDE);
+	mcp2518fd_write_word(addr, mObj.word);
+	return 0;
+}
+
+int8_t mcp2518fd_filter_assign(CAN_FILTER filter, CAN_FIFO_CHANNEL channel)
+{
+	REG_CiFLTCON_BYTE ciFltcon;
+
+	uint16_t addr = 0;
+	ciFltcon.bF.BufferPointer = channel;
+	addr = MCP2518FD_REG_CiFLTCON + filter;
+	mcp2518fd_write_byte(addr, ciFltcon.byte);
+
+	return 0;
+}
+
+int8_t mcp2518fd_filter_enable(CAN_FILTER filter)
+{
+	// clear FLTEN bit before changing filter or mask object
+	REG_CiFLTCON_BYTE ciFltcon;
+	uint16_t addr = MCP2518FD_REG_CiFLTCON + filter;
+	mcp2518fd_read_byte(addr, &ciFltcon.byte);
+	ciFltcon.bF.Enable = 1; // enable filter
+	mcp2518fd_write_byte(addr, ciFltcon.byte);
+
+	return 0;
+}
+
+void mcp2518fd_opmode_select(CAN_OPERATION_MODE opmode)
+{
+	uint8_t ciCon_data = 0;
+	mcp2518fd_read_byte(MCP2518FD_REG_CiCON + 3, &ciCon_data);
+	ciCon_data &= ~0x07;
+	ciCon_data |= opmode;
+	mcp2518fd_write_byte(MCP2518FD_REG_CiCON + 3, ciCon_data);
+
+	// wait for opmod to match the requested operation mode before continuing
+	ciCon_data = 0;
+
+	while (1) {
+		mcp2518fd_read_byte(MCP2518FD_REG_CiCON + 2, &ciCon_data);
+		if ((ciCon_data >> 5 & 0x07) == opmode) {
+			break;
+		}
+	}
+}
+
 int8_t mcp2518fd_configure_bit_time_40MHz(CAN_NOMINAL_BITTIME_SETUP bit_time)
 {
 	REG_CiNBTCFG ciNbtcfg;
@@ -533,5 +601,52 @@ int8_t mcp2518fd_configure_bit_time_40MHz(CAN_NOMINAL_BITTIME_SETUP bit_time)
 	}
 
 	mcp2518fd_write_word(MCP2518FD_REG_CiNBTCFG, ciNbtcfg.word);
+	return 0;
+}
+
+// Always receives 8 data bytes at a time because CAN 2.0
+// This also assumes no timestamping, which is a big drawback in this driver
+int8_t mcp2518fd_receive_message(CAN_FIFO_CHANNEL channel, CAN_RX_MSGOBJ *rxObj, uint8_t *rxd)
+{
+	uint8_t fifo_status_data;
+	uint16_t addr = 0;
+	addr = MCP2518FD_REG_CiFIFOSTA + (channel * MCP2518FD_FIFO_REG_STRIDE);
+	mcp2518fd_read_byte(addr, &fifo_status_data);
+
+	// if TFNRNIF is not set (if fifo is empty), return error
+	if (!(fifo_status_data & 0x01)) {
+		return -1;
+	}
+
+	// get addr in RAM of next TX object from CiFIFOUA1
+	REG_CiFIFOUA ciFifoua;
+	addr = MCP2518FD_REG_CiFIFOUA + (channel * MCP2518FD_FIFO_REG_STRIDE);
+	mcp2518fd_read_word(addr, &ciFifoua.word);
+	addr = MCP2518FD_RAM_START + ciFifoua.bF.UserAddress;
+
+	// read one rx obj data from RAM in multiples of 4 bytes
+	uint32_t rx_obj_data[4];
+	for (int i = 0; i < 4; i++) {
+		mcp2518fd_read_word(addr + (i * 4), &rx_obj_data[i]);
+	}
+
+	// store rxObj for the caller
+	rxObj->word[0] = rx_obj_data[1];
+	rxObj->word[1] = rx_obj_data[2];
+
+	// store rx data for the caller
+	rxd[0] = (rx_obj_data[2] >> 0) & 0xFF;
+	rxd[1] = (rx_obj_data[2] >> 8) & 0xFF;
+	rxd[2] = (rx_obj_data[2] >> 16) & 0xFF;
+	rxd[3] = (rx_obj_data[2] >> 24) & 0xFF;
+	rxd[4] = (rx_obj_data[3] >> 0) & 0xFF;
+	rxd[5] = (rx_obj_data[3] >> 8) & 0xFF;
+	rxd[6] = (rx_obj_data[3] >> 16) & 0xFF;
+	rxd[7] = (rx_obj_data[3] >> 24) & 0xFF;
+
+	// set UINC
+	addr = MCP2518FD_REG_CiFIFOCON + (channel * MCP2518FD_FIFO_REG_STRIDE);
+	mcp2518fd_write_byte(addr + 1, 0b01);
+
 	return 0;
 }

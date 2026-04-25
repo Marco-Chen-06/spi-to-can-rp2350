@@ -21,17 +21,18 @@ void blink_builtin(int delay_ms);
 // int8_t test_read_write();
 int8_t mcp2518fd_tx_fifo_test();
 int8_t mcp2518fd_rx_init_test();
+int8_t mcp2518fd_rx_init();
 int8_t mcp2518fd_rx_fifo_test(uint8_t *data);
-int8_t mcp2518fd_init_test(uint32_t spi_clk_rate);
+int8_t mcp2518fd_init(uint32_t spi_clk_rate);
 
 int main()
 {
 	stdio_init_all();
 	blink_builtin_init();
 
-	mcp2518fd_init_test(SPI_CLK_RATE);
+	mcp2518fd_init(SPI_CLK_RATE);
 
-	mcp2518fd_rx_init_test();
+	mcp2518fd_rx_init();
 
 	printf("\n-----STARTING TEST-----\n");
 	uint8_t databuf[8];
@@ -192,6 +193,29 @@ int8_t mcp2518fd_tx_fifo_test()
 	return 0;
 }
 
+int8_t mcp2518fd_rx_init()
+{
+	// configure filter object 0
+	CAN_FILTEROBJ_ID fObj;
+	fObj.SID = 0x200;
+	fObj.SID11 = 0;
+	fObj.EID = 0;
+	fObj.EXIDE = 0;
+	mcp2518fd_filter_configure(CAN_FILTER0, &fObj);
+
+	// configure message object 0
+	CAN_MASKOBJ_ID mObj;
+	mObj.MSID = 0x7F0; // make mask 4 bits wide from the LSB
+	mObj.MSID11 = 0;
+	mObj.MEID = 0;
+	mObj.MIDE = 1; // match EXIDE bit
+	mcp2518fd_filter_mask_configure(CAN_FILTER0, &mObj);
+
+	mcp2518fd_filter_assign(CAN_FILTER0, CAN_FIFO_CH2);
+
+	mcp2518fd_filter_enable(CAN_FILTER0);
+}
+
 // this function is expected to only be called before mcp2518fd_rx_fifo_test
 // this function sets up filter object 0 and mask object 0 with hardcoded values
 // It captures frames with SID from 0x200 - 0x20F and points the filter to FIFO2
@@ -207,7 +231,7 @@ int8_t mcp2518fd_rx_init_test()
 	REG_CiFLTCON_BYTE ciFltcon0;
 	uint32_t addr = MCP2518FD_REG_CiFLTCON + filter_num;
 	mcp2518fd_read_byte(addr, &ciFltcon0.byte);
-	ciFltcon0.bF.Enable = 0; // disable fifo
+	ciFltcon0.bF.Enable = 0; // disable filter
 	mcp2518fd_write_byte(addr, ciFltcon0.byte);
 
 	// configure filter object 0
@@ -230,7 +254,7 @@ int8_t mcp2518fd_rx_init_test()
 	mcp2518fd_write_word(addr, mObj0.word);
 
 	ciFltcon0.bF.BufferPointer = fifo_channel_num;
-	ciFltcon0.bF.Enable = 1; // enable fifo
+	ciFltcon0.bF.Enable = 1; // enable filter
 	addr = MCP2518FD_REG_CiFLTCON + filter_num;
 	mcp2518fd_write_byte(addr, ciFltcon0.byte);
 
@@ -287,7 +311,7 @@ int8_t mcp2518fd_rx_fifo_test(uint8_t *data)
 /* exact copy of mcp2518fd_init, but this time im slowly changing out the
    hardcoded configuration for general API calls
 */
-int8_t mcp2518fd_init_test(uint32_t spi_clk_rate)
+int8_t mcp2518fd_init(uint32_t spi_clk_rate)
 {
 	// Initialize RP2350 SPI peripheral
 	mcp2518fd_spi_init(spi_clk_rate);
