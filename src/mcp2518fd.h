@@ -31,7 +31,6 @@
 /* structs and enums for API, mainly taken from mcp25XXfd application code*/
 
 //! CAN FIFO Channels
-
 typedef enum {
 	CAN_FIFO_CH0, // CAN_TXQUEUE_CH0
 	CAN_FIFO_CH1,
@@ -120,7 +119,6 @@ typedef enum {
 } CAN_OPERATION_MODE;
 
 //! CAN Nominal Bit Time Setup
-
 typedef enum { CAN_NBT_125K, CAN_NBT_250K, CAN_NBT_500K, CAN_NBT_1M } CAN_NOMINAL_BITTIME_SETUP;
 
 //! CAN Configure
@@ -182,14 +180,6 @@ typedef struct _CAN_RX_FIFO_CONFIG {
 	uint32_t FifoSize : 5;
 	uint32_t PayLoadSize : 3;
 } CAN_RX_FIFO_CONFIG;
-
-/* NEED THE FOLLOWING CONFIGS:*/
-/* 
-ciFifocon1
-ciFifocon2
-
-*/
-/* ------------ */
 
 //! CAN Message Object ID
 typedef struct CAN_MSGOBJ_ID {
@@ -287,7 +277,6 @@ void mcp2518fd_ram_init(uint8_t data);
  These functions use the read/write initialization functions defined above
  to create a CAN abstraction layer. 
 */
-
 int8_t mcp2518fd_configure(CAN_CONFIG *config);
 int8_t mcp2518fd_configure_reset(CAN_CONFIG *config);
 int8_t mcp2518fd_osc_configure(CAN_OSC_CTRL *config);
