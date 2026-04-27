@@ -10,11 +10,13 @@
   Another thing is that this driver is fully for CAN 2.0, and CANFD is not supported.
 
   There is also a ton of status gets and error handling that must be implemented too
+  (eg. if you try to send a message to a receive channel, then return an error)
 */
 
 /*
  * MCP2518FD.h
  * API and implementation for mcp2518fd driver
+ * This driver is supported for CAN 2.0 with no timestamps as of now.
 */
 
 #ifndef MCP2518FD_H
@@ -301,27 +303,12 @@ int8_t mcp2518fd_filter_configure(CAN_FILTER filter, CAN_FILTEROBJ_ID *config);
 int8_t mcp2518fd_filter_mask_configure(CAN_FILTER filter, CAN_MASKOBJ_ID *config);
 int8_t mcp2518fd_filter_assign(CAN_FILTER filter, CAN_FIFO_CHANNEL channel);
 int8_t mcp2518fd_filter_enable(CAN_FILTER filter);
-/*
-    Need to add (rx):
-    filter object config
-    mask object config
-    receive message
-
-    (not sure if below are needed)
-    rx object config
-    rx object reset
-*/
-
-/*
-    Need to add (tx):
-    tx object config
-    tx object reset
-
-*/
 
 void mcp2518fd_opmode_select(CAN_OPERATION_MODE opmode);
 int8_t mcp2518fd_configure_bit_time_40MHz(CAN_NOMINAL_BITTIME_SETUP bit_time);
 
 int8_t mcp2518fd_receive_message(CAN_FIFO_CHANNEL channel, CAN_RX_MSGOBJ *rxObj, uint8_t *rxd);
+int8_t mcp2518fd_load_message(CAN_FIFO_CHANNEL channel, CAN_TX_MSGOBJ *txObj, uint8_t *txd);
+int8_t mcp2518fd_send_message(CAN_FIFO_CHANNEL channel);
 
 #endif

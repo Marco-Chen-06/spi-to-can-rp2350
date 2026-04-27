@@ -563,6 +563,11 @@ void mcp2518fd_opmode_select(CAN_OPERATION_MODE opmode)
 	}
 }
 
+/*
+	Set up the bit time configurations for a given nominal bit time for CAN 2.0
+	return -1 if bit time is invalid
+	return 0 if success
+*/
 int8_t mcp2518fd_configure_bit_time_40MHz(CAN_NOMINAL_BITTIME_SETUP bit_time)
 {
 	REG_CiNBTCFG ciNbtcfg;
@@ -604,12 +609,26 @@ int8_t mcp2518fd_configure_bit_time_40MHz(CAN_NOMINAL_BITTIME_SETUP bit_time)
 	return 0;
 }
 
-// Always receives 8 data bytes at a time because CAN 2.0
-// This also assumes no timestamping, which is a big drawback in this driver
+/*
+	Receive a message from a specified RX channel
+	rx_data is expected to be 8 bytes because CAN 2.0, and no timestamps
+	return -1 if FIFO is not an RX fifo
+	return -2 if there is no room in RX FIFO
+	return 0 if success
+*/
 int8_t mcp2518fd_receive_message(CAN_FIFO_CHANNEL channel, CAN_RX_MSGOBJ *rxObj, uint8_t *rxd)
 {
 	uint8_t fifo_status_data;
 	uint16_t addr = 0;
+
+	// make sure this is a receive fifo
+	REG_CiFIFOCON ciFifocon;
+	addr = MCP2518FD_REG_CiFIFOCON + (channel * MCP2518FD_FIFO_REG_STRIDE);
+	mcp2518fd_read_word(addr, &ciFifocon.word);
+	if (ciFifocon.txBF.TxEnable) {
+		return -1;
+	}
+
 	addr = MCP2518FD_REG_CiFIFOSTA + (channel * MCP2518FD_FIFO_REG_STRIDE);
 	mcp2518fd_read_byte(addr, &fifo_status_data);
 
@@ -648,5 +667,98 @@ int8_t mcp2518fd_receive_message(CAN_FIFO_CHANNEL channel, CAN_RX_MSGOBJ *rxObj,
 	addr = MCP2518FD_REG_CiFIFOCON + (channel * MCP2518FD_FIFO_REG_STRIDE);
 	mcp2518fd_write_byte(addr + 1, 0b01);
 
+	return 0;
+}
+
+/*
+	Load a transmit message into a specified TX FIFO channel
+	tx_data is expected to be 8 bytes because of CAN 2.0, and no timestamps
+	return -1 if FIFO is not a TX fifo
+	return -2 if there is no room in TX FIFO
+	return 0 if success
+*/
+int8_t mcp2518fd_load_message(CAN_FIFO_CHANNEL channel, CAN_TX_MSGOBJ *txObj, uint8_t *tx_data)
+{
+	int8_t data_payload_size = 8; // bytes
+
+	// make sure this is a transmit fifo
+	REG_CiFIFOCON ciFifocon;
+	uint16_t addr = 0;
+	addr = MCP2518FD_REG_CiFIFOCON + (channel * MCP2518FD_FIFO_REG_STRIDE);
+	mcp2518fd_read_word(addr, &ciFifocon.word);
+	if (!ciFifocon.txBF.TxEnable) {
+		return -1;
+	}
+
+	// make sure there is room in FIFO by verifying CiFIFOSTAX.TFNRNIF is set where X is the FIFO channel number
+	uint8_t fifo_status_data;
+	mcp2518fd_read_byte(MCP2518FD_REG_CiFIFOSTA + (channel * MCP2518FD_FIFO_REG_STRIDE),
+			    &fifo_status_data);
+	if (!(fifo_status_data & 0x01)) {
+		return -2;
+	}
+
+	// get address in RAM of next TX object from CiFIFOUAX
+	REG_CiFIFOUA ciFifoua;
+	mcp2518fd_read_word(MCP2518FD_REG_CiFIFOUA + (channel * MCP2518FD_FIFO_REG_STRIDE),
+			    &ciFifoua.word);
+	addr = MCP2518FD_RAM_START + ciFifoua.bF.UserAddress;
+
+	// buffer to store full TX message (8 bytes of txObj config + 8 bytes of data)
+	uint8_t txbuffer[16];
+	for (int i = 0; i < data_payload_size; i++) {
+		txbuffer[i] = txObj->byte[i];
+		txbuffer[i + 8] = tx_data[i];
+	}
+
+	// write data to RAM in multiples of 4 bytes
+	uint32_t ram_tx_data = 0;
+	for (int i = 0; i < 16; i += 4) {
+		ram_tx_data = txbuffer[i] | (txbuffer[i + 1] << 8) | (txbuffer[i + 2] << 16) |
+			      (txbuffer[i + 3] << 24);
+		mcp2518fd_write_word(addr, ram_tx_data);
+		addr += 4;
+	}
+	return 0;
+}
+
+/*
+	Send the first message in the TX FIFO channel, assuming that it is a TX fifo
+	return -1 if FIFO is not a TX FIFO
+	return -2 if FIFO is currently resetting
+	return 0 if success
+*/
+int8_t mcp2518fd_send_message(CAN_FIFO_CHANNEL channel)
+{
+	uint8_t fifo_config_data;
+	uint16_t addr = 0;
+
+	// make sure this is a transmit fifo
+	REG_CiFIFOCON ciFifocon;
+	addr = MCP2518FD_REG_CiFIFOCON + (channel * MCP2518FD_FIFO_REG_STRIDE);
+	mcp2518fd_read_word(addr, &ciFifocon.word);
+	if (!ciFifocon.txBF.TxEnable) {
+		return -1;
+	}
+
+	// get fifo configuration data (FRESET, TXREQ, and UINC)
+	addr = MCP2518FD_REG_CiFIFOCON + (channel * MCP2518FD_FIFO_REG_STRIDE);
+	mcp2518fd_read_byte(addr + 1, &fifo_config_data);
+
+	// make sure FIFO is not resetting by verifying FRESET bit is not set
+	if (fifo_config_data & (1 << 2)) {
+		return -2;
+	}
+
+	// set UINC and TXREQ
+	mcp2518fd_write_byte(addr + 1, 0b11);
+
+	// wait until TXREQ is cleared before continuing
+	while (1) {
+		mcp2518fd_read_byte(addr + 1, &fifo_config_data);
+		if (!(fifo_config_data & (1 << 1))) {
+			break;
+		}
+	}
 	return 0;
 }

@@ -27,27 +27,50 @@ int8_t mcp2518fd_rx_init();
 
 int main()
 {
+	// The test below continuously sends [0, 1, 2, 3, 4, 5, 6, 7] to 0x200
+	// and continiously receives message with IDs 0x200 - 0x20F
 	stdio_init_all();
 	blink_builtin_init();
 
 	mcp2518fd_init(SPI_CLK_RATE);
-
 	mcp2518fd_rx_init();
 
 	printf("\n-----STARTING TEST-----\n");
-	uint8_t databuf[8];
+	uint8_t rx_data[8];
+	uint8_t tx_data[8];
 	CAN_RX_MSGOBJ rxObj;
-	int error = 0;
+	CAN_TX_MSGOBJ tx_obj;
+
+	tx_obj.word[0] = 0;
+	tx_obj.word[1] = 0;
+	tx_obj.bF.id.SID = 0x200; // 0x200 is arbitrary, just a random ID number I chose
+	tx_obj.bF.id.EID = 0;
+	// data BRS not faster
+	tx_obj.bF.ctrl.BRS = 0;
+	// 8 byte payload
+	tx_obj.bF.ctrl.DLC = 0b1000;
+	// not can FD frame
+	tx_obj.bF.ctrl.FDF = 0;
+	// base format, not extended format
+	tx_obj.bF.ctrl.IDE = 0;
+	for (int i = 0; i < 8; i++) {
+		tx_data[i] = i;
+	}
+
 	for (;;) {
 		// receive a message, and retry if there is an error
-		while ((mcp2518fd_receive_message(CAN_FIFO_CH2, &rxObj, databuf))) {
-			tight_loop_contents();
+		if (mcp2518fd_receive_message(CAN_FIFO_CH2, &rxObj, rx_data) == 0) {
+			printf("Out (Decimal): ");
+			for (int i = 0; i < 8; i++) {
+				printf("%d ", rx_data[i]);
+			}
+			printf("\n");
 		}
-		printf("Out (Decimal): ");
-		for (int i = 0; i < 8; i++) {
-			printf("%d ", databuf[i]);
-		}
-		printf("\n");
+
+		// continuously send messages
+		mcp2518fd_load_message(CAN_FIFO_CH1, &tx_obj, tx_data);
+		mcp2518fd_send_message(CAN_FIFO_CH1);
+
 		blink_builtin(500);
 	}
 }
