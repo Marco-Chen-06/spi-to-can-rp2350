@@ -1,4 +1,12 @@
 cmake_minimum_required(VERSION 3.13)
+
+set(PICO_BOARD pico2)
+
+# default to debug build (-DCMAKE_BUILD_TYPE=Debug flag)
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+endif()
+
 include(pico_sdk_import.cmake)
 
 project(spi-to-can-transceiver C CXX ASM)
@@ -15,6 +23,7 @@ set(PICO_DEOPTIMIZED_DEBUG 1)
 
 add_executable(mcp2518fd
     src/mcp2518fd.c
+    src/main.c
 )
 
 target_link_libraries(mcp2518fd
@@ -26,8 +35,8 @@ target_link_libraries(mcp2518fd
     hardware_spi
 )
 
-pico_enable_stdio_usb(mcp2518fd 1)
-pico_enable_stdio_uart(mcp2518fd 0)
+#pico_enable_stdio_usb(mcp2518fd 1)
+pico_enable_stdio_uart(mcp2518fd 1)
 
 pico_add_extra_outputs(mcp2518fd)
 
