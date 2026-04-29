@@ -14,7 +14,7 @@ I am also assuming that you are using the two-pico setup, with a pico1 as a hard
 as a target board. 
 
 The setup guide for the openocd and pico environment is here, but it's better to just ask Fred about this.
-https://docs.google.com/document/d/1_4DQLY6vFT5FQG7_9an4s5RqUcZifFovZtI_F7NQG68/edit?usp=sharing
+https://docs.google.com/document/d/1_WB6y4Zo6_5c8AFxJZ2dGBiKPQcZcP_-O0iuN4_h9GI/edit?tab=t.0
 
 ### Compiling the code
 First, clone this repository.
