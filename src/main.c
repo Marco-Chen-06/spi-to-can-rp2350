@@ -1,6 +1,7 @@
 #include "mcp2518fd.h"
 #include "mcp2518fd_hw.h"
 #include <stdio.h>
+#include <string.h>
 
 /*
   Frequency of SCK must be less than or equal to 
@@ -30,6 +31,7 @@ int main()
 	printf("\n-----STARTING TEST-----\n");
 	uint8_t rx_data[8];
 	uint8_t tx_data[8];
+	uint8_t tx_data2[8];
 	CAN_RX_MSGOBJ rxObj;
 	CAN_TX_MSGOBJ tx_obj;
 
@@ -45,14 +47,13 @@ int main()
 	tx_obj.bF.ctrl.FDF = 0;
 	// base format, not extended format
 	tx_obj.bF.ctrl.IDE = 0;
-	for (int i = 0; i < 8; i++) {
-		tx_data[i] = i;
-	}
+	memcpy(tx_data, "hello   ", 8);
+	memcpy(tx_data2, "world!!!", 8);
 
 	for (;;) {
 		// receive a message, and retry if there is an error
 		if (mcp2518fd_receive_message(CAN_FIFO_CH2, &rxObj, rx_data) == 0) {
-			printf("Out (Decimal): ");
+			printf("Received Data: ");
 			for (int i = 0; i < 8; i++) {
 				printf("%d ", rx_data[i]);
 			}
@@ -61,6 +62,10 @@ int main()
 
 		// continuously send messages
 		mcp2518fd_load_message(CAN_FIFO_CH1, &tx_obj, tx_data);
+		mcp2518fd_send_message(CAN_FIFO_CH1);
+
+		// continuously send messages
+		mcp2518fd_load_message(CAN_FIFO_CH1, &tx_obj, tx_data2);
 		mcp2518fd_send_message(CAN_FIFO_CH1);
 
 		// do a blocking blink every half second
